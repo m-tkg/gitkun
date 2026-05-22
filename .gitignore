@@ -1,0 +1,12 @@
+# ビルド成果物
+.build/
+
+# macOS
+.DS_Store
+
+# Xcode ユーザー固有設定
+*.xcuserdata/
+gitkun.xcodeproj/xcuserdata/
+
+# Claude Code ローカル設定
+.claude/
