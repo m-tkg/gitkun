@@ -2,12 +2,8 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag (e.g. v1.0.0)'
-        required: true
 
 permissions:
   contents: write
@@ -18,27 +14,49 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Build Release
-        run: make release
-
-      - name: Create zip
-        working-directory: .build/Build/Products/Release
-        run: zip -ry "$GITHUB_WORKSPACE/gitkun.zip" gitkun.app
-
-      - name: Resolve tag
-        id: tag
+      - name: Resolve version
+        id: ver
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "name=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          V=$(grep -m1 'MARKETING_VERSION' gitkun.xcodeproj/project.pbxproj \
+              | sed -E 's/.*MARKETING_VERSION[[:space:]]*=[[:space:]]*//; s/;.*//' \
+              | tr -d ' "')
+          if [ -z "$V" ]; then
+            echo "MARKETING_VERSION not found in project.pbxproj" >&2
+            exit 1
           fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "tag=v$V" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $V (tag v$V)"
 
-      - name: Create GitHub Release
+      - name: Check existing release
+        id: check
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.tag.outputs.name }}" \
-            --title "${{ steps.tag.outputs.name }}" \
+          if gh release view "${{ steps.ver.outputs.tag }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.ver.outputs.tag }} already exists; skipping."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Release
+        if: steps.check.outputs.exists == 'false'
+        run: make release
+
+      - name: Create zip
+        if: steps.check.outputs.exists == 'false'
+        working-directory: .build/Build/Products/Release
+        run: zip -ry "$GITHUB_WORKSPACE/gitkun.zip" gitkun.app
+
+      - name: Create tag and release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.ver.outputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.ver.outputs.tag }}" \
             --generate-notes \
             gitkun.zip
