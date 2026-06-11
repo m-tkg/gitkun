@@ -137,103 +137,27 @@ actor GitHubNotificationService {
         }
     }
 
-    // MARK: - Process 起動: pipe を readabilityHandler でストリーム読みする
+    // MARK: - Process 起動
 
-    /// `Process` を起動し、stdout/stderr を `readabilityHandler` で逐次読み出して蓄積する。
-    /// `terminationHandler` 内で `readDataToEndOfFile` を呼ぶ実装だと、出力が pipe バッファ
-    /// （macOS では概ね 64KB）を超えた瞬間に process が write でブロックして exit せず、
-    /// terminationHandler が呼ばれない deadlock になるため、こちらの形を採る。
+    /// `ProcessRunner` で gh を実行し、失敗時は stderr の内容から `AppError` に変換する。
     private func runProcess(executable: String,
                             arguments: [String],
                             token: String?) async throws -> Data {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: executable)
-        process.arguments = arguments
-
         var env = baseEnv()
         if let token { env["GH_TOKEN"] = token }
-        process.environment = env
 
-        let outPipe = Pipe()
-        let errPipe = Pipe()
-        process.standardOutput = outPipe
-        process.standardError = errPipe
-
-        return try await withCheckedThrowingContinuation { continuation in
-            let lock = NSLock()
-            var outData = Data()
-            var errData = Data()
-            var hasResumed = false
-
-            func resume(_ action: () -> Void) {
-                lock.lock()
-                defer { lock.unlock() }
-                guard !hasResumed else { return }
-                hasResumed = true
-                action()
+        do {
+            return try await ProcessRunner.run(executable: executable,
+                                               arguments: arguments,
+                                               environment: env)
+        } catch let failure as ProcessRunner.Failure {
+            let errMsg = failure.stderr
+            if errMsg.lowercased().contains("auth") || errMsg.lowercased().contains("login") {
+                logger.error("Auth error: \(errMsg)")
+                throw AppError.authRequired
             }
-
-            outPipe.fileHandleForReading.readabilityHandler = { handle in
-                let chunk = handle.availableData
-                if chunk.isEmpty {
-                    handle.readabilityHandler = nil
-                } else {
-                    lock.lock()
-                    outData.append(chunk)
-                    lock.unlock()
-                }
-            }
-            errPipe.fileHandleForReading.readabilityHandler = { handle in
-                let chunk = handle.availableData
-                if chunk.isEmpty {
-                    handle.readabilityHandler = nil
-                } else {
-                    lock.lock()
-                    errData.append(chunk)
-                    lock.unlock()
-                }
-            }
-
-            process.terminationHandler = { proc in
-                // ハンドラを外して残りのデータを読み切る
-                outPipe.fileHandleForReading.readabilityHandler = nil
-                errPipe.fileHandleForReading.readabilityHandler = nil
-                if let remaining = try? outPipe.fileHandleForReading.readToEnd() {
-                    lock.lock(); outData.append(remaining); lock.unlock()
-                }
-                if let remaining = try? errPipe.fileHandleForReading.readToEnd() {
-                    lock.lock(); errData.append(remaining); lock.unlock()
-                }
-
-                lock.lock()
-                let stdout = outData
-                let stderr = errData
-                lock.unlock()
-
-                let errMsg = String(data: stderr, encoding: .utf8) ?? ""
-                let outPreview = String(data: stdout.prefix(200), encoding: .utf8) ?? ""
-                logger.info("exit=\(proc.terminationStatus) stderr=\"\(errMsg)\" stdout_preview=\"\(outPreview)\"")
-
-                resume {
-                    guard proc.terminationStatus == 0 else {
-                        if errMsg.lowercased().contains("auth") || errMsg.lowercased().contains("login") {
-                            logger.error("Auth error: \(errMsg)")
-                            continuation.resume(throwing: AppError.authRequired)
-                        } else {
-                            logger.error("Fetch failed (exit=\(proc.terminationStatus)): \(errMsg)")
-                            continuation.resume(throwing: AppError.fetchFailed(errMsg.trimmingCharacters(in: .whitespacesAndNewlines)))
-                        }
-                        return
-                    }
-                    continuation.resume(returning: stdout)
-                }
-            }
-
-            do {
-                try process.run()
-            } catch {
-                resume { continuation.resume(throwing: error) }
-            }
+            logger.error("Fetch failed (exit=\(failure.exitCode)): \(errMsg)")
+            throw AppError.fetchFailed(errMsg.trimmingCharacters(in: .whitespacesAndNewlines))
         }
     }
 

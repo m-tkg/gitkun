@@ -120,32 +120,14 @@ final class SelfUpdater {
         try process.run()
     }
 
-    /// プロセスを起動し終了を待つ。出力が小さいコマンド（ditto 等）専用。
+    /// プロセスを起動し終了を待つ。失敗時は stderr を `UpdateError` に変換する。
     private func runAndWait(_ executable: String, _ arguments: [String]) async throws {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: executable)
-        process.arguments = arguments
-        let errPipe = Pipe()
-        process.standardError = errPipe
-        process.standardOutput = Pipe()
-
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            process.terminationHandler = { proc in
-                if proc.terminationStatus == 0 {
-                    continuation.resume()
-                } else {
-                    let data = (try? errPipe.fileHandleForReading.readToEnd()) ?? Data()
-                    let msg = String(data: data, encoding: .utf8)?
-                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                    logger.error("Command failed (\(executable, privacy: .public) exit=\(proc.terminationStatus)): \(msg)")
-                    continuation.resume(throwing: UpdateError.commandFailed(msg.isEmpty ? "exit \(proc.terminationStatus)" : msg))
-                }
-            }
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
+        do {
+            _ = try await ProcessRunner.run(executable: executable, arguments: arguments)
+        } catch let failure as ProcessRunner.Failure {
+            let msg = failure.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            logger.error("Command failed (\(executable, privacy: .public) exit=\(failure.exitCode)): \(msg)")
+            throw UpdateError.commandFailed(msg.isEmpty ? "exit \(failure.exitCode)" : msg)
         }
     }
 }
