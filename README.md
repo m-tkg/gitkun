@@ -34,19 +34,18 @@ make clean   # ビルド成果物削除
 
 ## リリース手順
 
-リリースは GitHub Actions（`.github/workflows/release.yml`）が **`v*` タグの push をトリガー**に、Release ビルド → `gitkun.app` を zip 化 → GitHub Releases へバイナリ添付まで自動で行う。
+バージョンは `gitkun.xcodeproj/project.pbxproj` の `MARKETING_VERSION`（3桁 semver、例 `1.2.0`）を唯一の源とする。アプリが表示するバージョンも `Info.plist` 経由でこの値を参照する。
 
-1. バージョンを上げる場合は `gitkun.xcodeproj/project.pbxproj` の `MARKETING_VERSION` を更新して main に commit & push
-2. タグを打って push するだけ
+リリースは GitHub Actions（`.github/workflows/release.yml`）が **main への push または手動実行（Run workflow）をトリガー**に動き、現在の `MARKETING_VERSION` を読み取って `v<version>` のリリースがまだ無ければ、Release ビルド → `gitkun.app` を zip 化 → タグ作成 → GitHub Releases へバイナリ添付までを自動で行う。
 
-```bash
-git tag v1.1.0
-git push origin v1.1.0
+```
+1. PR で MARKETING_VERSION を上げる（例 1.2.0）
+2. main にマージ → 自動で v1.2.0 がタグ付けされ、gitkun.zip 付きで公開される
 ```
 
-数十秒後、`gitkun.zip` が添付された Release が公開される。
-
-> **注意:** 手動で `gh release create` を実行しないこと。タグ push でワークフローが同名タグの Release を作成するため、先に手動でリリースを作ると CI 側が「release with the same tag name already exists」で失敗し、バイナリが添付されない。
+- バージョン未変更の main push は「既存リリースあり」としてスキップされる（安全）
+- 手動で出したいときは Actions の **Release → Run workflow**
+- タグは CI が自動作成するため、手で `git tag` / `gh release create` する必要はない
 
 ## 使い方
 
