@@ -285,8 +285,7 @@ Status ▶                 ← サブメニュー
 ⬆ Update to vX.Y.Z…      ← 新バージョン検知時のみ表示
 ────────────────────
 Refresh                   ← フェッチ中は disabled
-Settings…                 ← 通知音設定ウィンドウを開く（⌘,）
-Launch at login: ON/OFF
+Settings…                 ← 設定ウィンドウを開く（⌘,）
 ────────────────────
 Quit
 ```
@@ -320,9 +319,9 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 | `knownUnreviewedPRIDs` | [Int] | `[]` |
 | `lastNotifiedReleaseTag` | String? | `nil` |
 
-通知音はメニューの `Settings…` から変更できる（`SettingsView.swift` を `AppDelegate` が
-`NSWindow` + `NSHostingController` で表示。SwiftUI の Settings シーンは macOS 14+ で
-セレクタ経由の表示がブロックされたため使わない）。
+通知音と Launch at login はメニューの `Settings…` から変更できる（`SettingsView.swift` を
+`AppDelegate` が `NSWindow` + `NSHostingController` で表示。SwiftUI の Settings シーンは
+macOS 14+ でセレクタ経由の表示がブロックされたため使わない）。
 未読通知用とレビュー依頼用で別の音を設定でき、選択肢は `/System/Library/Sounds` から実行時に列挙、
 選択時にプレビュー再生する。`@AppStorage` と `LocalStore` は同じ UserDefaults キーを共有する。
 その他の設定（ポーリング間隔・音の ON/OFF）は UI 未実装で `LocalStore` 経由で変更可能。
@@ -347,7 +346,7 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
-| `SettingsView.swift` | 通知音設定の SwiftUI ビュー（AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
+| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音・Launch at login。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
 | `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem`, `ReleaseInfo`, `VersionComparator` 等） |
 
 ---
