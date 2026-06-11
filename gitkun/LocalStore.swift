@@ -11,6 +11,7 @@ final class LocalStore {
         static let pollingInterval = "pollingInterval"
         static let diffStrategy = "diffStrategy"
         static let soundEnabled = "soundEnabled"
+        static let lastNotifiedReleaseTag = "lastNotifiedReleaseTag"
     }
 
     var knownIDs: Set<String> {
@@ -51,6 +52,12 @@ final class LocalStore {
                 : defaults.bool(forKey: Keys.soundEnabled)
         }
         set { defaults.set(newValue, forKey: Keys.soundEnabled) }
+    }
+
+    /// 最後にバナー通知した最新リリースのタグ。同一バージョンの再通知を抑止する。
+    var lastNotifiedReleaseTag: String? {
+        get { defaults.string(forKey: Keys.lastNotifiedReleaseTag) }
+        set { defaults.set(newValue, forKey: Keys.lastNotifiedReleaseTag) }
     }
 
     // 起動ごとにリセットするメモリ変数
