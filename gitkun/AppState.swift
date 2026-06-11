@@ -19,6 +19,8 @@ final class AppState: ObservableObject {
     @Published var lastErrorDetail: String? = nil
     /// 自分より新しいリリースが見つかったとき非 nil。
     @Published var availableUpdate: ReleaseInfo? = nil
+    /// 最後に取得した最新リリースのタグ（新旧問わず）。設定画面の表示用。
+    @Published var latestReleaseTag: String? = nil
 
     // MARK: - 依存オブジェクト
 
@@ -72,6 +74,7 @@ final class AppState: ObservableObject {
     func checkForUpdate() async {
         do {
             let release = try await service.fetchLatestRelease()
+            latestReleaseTag = release.tagName
             guard VersionComparator.isNewer(tag: release.tagName, than: currentVersion) else {
                 availableUpdate = nil
                 return
@@ -86,7 +89,7 @@ final class AppState: ObservableObject {
                           body: "\(release.tagName) is available (current \(currentVersion))",
                           url: url)
             if store.soundEnabled {
-                notifier.playSound(named: store.unreadSoundName)
+                notifier.playSound(named: store.updateSoundName)
             }
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
@@ -117,8 +120,12 @@ final class AppState: ObservableObject {
 
     // MARK: - フェッチ
 
+    /// 手動 Refresh。通常のフェッチに加えて最新リリースの確認も行う。
     func fetchNow() {
-        Task { await performFetch() }
+        Task {
+            await performFetch()
+            await checkForUpdate()
+        }
     }
 
     func performFetch() async {

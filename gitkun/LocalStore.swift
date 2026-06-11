@@ -11,6 +11,7 @@ final class LocalStore {
         static let soundEnabled = "soundEnabled"
         static let unreadSoundName = "unreadSoundName"
         static let reviewSoundName = "reviewSoundName"
+        static let updateSoundName = "updateSoundName"
         static let lastNotifiedReleaseTag = "lastNotifiedReleaseTag"
     }
 
@@ -57,6 +58,12 @@ final class LocalStore {
     var reviewSoundName: String {
         get { defaults.string(forKey: Keys.reviewSoundName) ?? "Glass" }
         set { defaults.set(newValue, forKey: Keys.reviewSoundName) }
+    }
+
+    /// アプリ更新を検知したときに鳴らす音の名前。SettingsView の @AppStorage と同じキー。
+    var updateSoundName: String {
+        get { defaults.string(forKey: Keys.updateSoundName) ?? "Glass" }
+        set { defaults.set(newValue, forKey: Keys.updateSoundName) }
     }
 
     /// 最後にバナー通知した最新リリースのタグ。同一バージョンの再通知を抑止する。
