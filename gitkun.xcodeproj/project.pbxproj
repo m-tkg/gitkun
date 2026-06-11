@@ -30,6 +30,8 @@
 		F1E5700000000000000000C5 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A003988D46499C91CAC414 /* Models.swift */; };
 		F1E5700000000000000000C6 /* URLResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA02C1CA31454C828330582F /* URLResolver.swift */; };
 		F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B6 /* FetchDiffTests.swift */; };
+		F1E5700000000000000000C7 /* FetchDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B7 /* FetchDiff.swift */; };
+		F1E5700000000000000000C8 /* FetchDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B7 /* FetchDiff.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +58,7 @@
 		F1E5700000000000000000B3 /* UnreviewedPRTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnreviewedPRTests.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryURLContainingTests.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B6 /* FetchDiffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchDiffTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B7 /* FetchDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchDiff.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +112,7 @@
 				36BC4119AF26466D832EE4DA /* UserNotifier.swift */,
 				F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */,
 				CC372F9CD2104307A4D34592 /* AppState.swift */,
+				F1E5700000000000000000B7 /* FetchDiff.swift */,
 				AF1FCB9480984C45B6BABC77 /* NotificationMenuItemView.swift */,
 				AAAA1111BBBB2222CCCC3333 /* SelfUpdater.swift */,
 				9C34FAE0C7CA42869ABDF0D5 /* Info.plist */,
@@ -220,6 +224,7 @@
 				2756E1AC36C1473BA66C7FD5 /* UserNotifier.swift in Sources */,
 				9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */,
 				59806207F04D46F5ABC13E08 /* AppState.swift in Sources */,
+				F1E5700000000000000000C7 /* FetchDiff.swift in Sources */,
 				157ED7DB719B4D1689127BFE /* NotificationMenuItemView.swift in Sources */,
 				AAAA1111BBBB2222CCCC3334 /* SelfUpdater.swift in Sources */,
 			);
@@ -236,6 +241,7 @@
 				F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */,
 				F1E5700000000000000000C5 /* Models.swift in Sources */,
 				F1E5700000000000000000C6 /* URLResolver.swift in Sources */,
+				F1E5700000000000000000C8 /* FetchDiff.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

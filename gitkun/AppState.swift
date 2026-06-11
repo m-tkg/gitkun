@@ -35,6 +35,11 @@ final class AppState: ObservableObject {
     private var updateTimer: Timer?
     private static let updateCheckInterval: TimeInterval = 3600
 
+    /// メニューに保持する通知・レビュー依頼の上限件数。
+    private static let displayLimit = 20
+    /// My PRs / Assigned Issues の保持上限件数。
+    private static let itemLimit = 50
+
     /// 実行中アプリのバージョン（`CFBundleShortVersionString`）。
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
@@ -178,12 +183,10 @@ final class AppState: ObservableObject {
     // MARK: - 差分判定と通知
 
     private func handleFetchedNotifications(_ fetched: [GitHubNotification], isFirstFetch: Bool) {
-        let fetchedIDs = Set(fetched.map(\.id))
-        let newIDs = fetchedIDs.subtracting(store.knownIDs)
-        let newOnes = fetched.filter { newIDs.contains($0.id) }
-        store.knownIDs = fetchedIDs
+        let (newOnes, nextKnown) = FetchDiff.newItems(fetched: fetched, known: store.knownIDs)
+        store.knownIDs = nextKnown
 
-        notifications = Array(fetched.prefix(20))
+        notifications = Array(fetched.prefix(Self.displayLimit))
         hasUnread = !notifications.isEmpty
 
         if isFirstFetch { return }
@@ -191,12 +194,10 @@ final class AppState: ObservableObject {
     }
 
     private func handleFetchedUnreviewedPRs(_ fetched: [UnreviewedPR], isFirstFetch: Bool) {
-        let fetchedIDs = Set(fetched.map(\.id))
-        let newIDs = fetchedIDs.subtracting(store.knownUnreviewedIDs)
-        let newOnes = fetched.filter { newIDs.contains($0.id) }
-        store.knownUnreviewedIDs = fetchedIDs
+        let (newOnes, nextKnown) = FetchDiff.newItems(fetched: fetched, known: store.knownUnreviewedIDs)
+        store.knownUnreviewedIDs = nextKnown
 
-        unreviewedPRs = Array(fetched.prefix(20))
+        unreviewedPRs = Array(fetched.prefix(Self.displayLimit))
         hasUnreviewed = !unreviewedPRs.isEmpty
 
         if isFirstFetch { return }
@@ -204,19 +205,11 @@ final class AppState: ObservableObject {
     }
 
     private func handleFetchedMyItems(assigned: [AssignedItem]?, authoredPRs: [AssignedItem]?) {
-        // PRs: assignee:@me と author:@me の PR を id で dedupe → updatedAt 降順 → 最大 50 件
-        var prsByID: [Int: AssignedItem] = [:]
-        for item in (assigned ?? []) where item.isPullRequest {
-            prsByID[item.id] = item
-        }
-        for item in (authoredPRs ?? []) where item.isPullRequest && prsByID[item.id] == nil {
-            prsByID[item.id] = item
-        }
-        myPRs = Array(prsByID.values.sorted { $0.updatedAt > $1.updatedAt }.prefix(50))
+        myPRs = FetchDiff.mergeMyPRs(assigned: assigned, authored: authoredPRs, limit: Self.itemLimit)
 
         // Issues: assigned 側のみ。assigned が失敗した場合は前回値を据え置き。
         if let assigned {
-            assignedIssues = Array(assigned.filter { !$0.isPullRequest }.prefix(50))
+            assignedIssues = Array(assigned.filter { !$0.isPullRequest }.prefix(Self.itemLimit))
         }
     }
 
