@@ -23,6 +23,12 @@
 		5A77D80A2A954A14A3716057 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC8B5679344E4C9892C76324 /* UserNotifications.framework */; };
 		2D39B2F518094040BC886893 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F52D63A5C114391BE53F483 /* ServiceManagement.framework */; };
 		E8C759FA405F477CA739C3F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */; };
+		F1E5700000000000000000C1 /* VersionComparatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B1 /* VersionComparatorTests.swift */; };
+		F1E5700000000000000000C2 /* URLResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B2 /* URLResolverTests.swift */; };
+		F1E5700000000000000000C3 /* UnreviewedPRTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B3 /* UnreviewedPRTests.swift */; };
+		F1E5700000000000000000C4 /* RepositoryURLContainingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */; };
+		F1E5700000000000000000C5 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A003988D46499C91CAC414 /* Models.swift */; };
+		F1E5700000000000000000C6 /* URLResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA02C1CA31454C828330582F /* URLResolver.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +49,11 @@
 		3F52D63A5C114391BE53F483 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B068547A7AB544039AA1D70B /* gitkun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = gitkun.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1E5700000000000000000A1 /* gitkunTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = gitkunTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1E5700000000000000000B1 /* VersionComparatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionComparatorTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B2 /* URLResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResolverTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B3 /* UnreviewedPRTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnreviewedPRTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryURLContainingTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +66,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1E5700000000000000000A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -62,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				999F9BAF32B5424D9EFC53AE /* gitkun */,
+				F1E5700000000000000000A8 /* gitkunTests */,
 				7565C14675164AB0B4ED3119 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				B068547A7AB544039AA1D70B /* gitkun.app */,
+				F1E5700000000000000000A1 /* gitkunTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,6 +115,17 @@
 			path = gitkun;
 			sourceTree = "<group>";
 		};
+		F1E5700000000000000000A8 /* gitkunTests */ = {
+			isa = PBXGroup;
+			children = (
+				F1E5700000000000000000B1 /* VersionComparatorTests.swift */,
+				F1E5700000000000000000B2 /* URLResolverTests.swift */,
+				F1E5700000000000000000B3 /* UnreviewedPRTests.swift */,
+				F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */,
+			);
+			path = gitkunTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -114,6 +145,22 @@
 			productName = gitkun;
 			productReference = B068547A7AB544039AA1D70B /* gitkun.app */;
 			productType = "com.apple.product-type.application";
+		};
+		F1E5700000000000000000A2 /* gitkunTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1E5700000000000000000A3 /* Build configuration list for PBXNativeTarget "gitkunTests" */;
+			buildPhases = (
+				F1E5700000000000000000A6 /* Sources */,
+				F1E5700000000000000000A7 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = gitkunTests;
+			productName = gitkunTests;
+			productReference = F1E5700000000000000000A1 /* gitkunTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -139,6 +186,7 @@
 			projectRoot = "";
 			targets = (
 				D5CB5C7C1A104607821AFA15 /* gitkun */,
+				F1E5700000000000000000A2 /* gitkunTests */,
 			);
 		};
 /* End PBXProject section */
@@ -171,6 +219,19 @@
 				59806207F04D46F5ABC13E08 /* AppState.swift in Sources */,
 				157ED7DB719B4D1689127BFE /* NotificationMenuItemView.swift in Sources */,
 				AAAA1111BBBB2222CCCC3334 /* SelfUpdater.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1E5700000000000000000A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1E5700000000000000000C1 /* VersionComparatorTests.swift in Sources */,
+				F1E5700000000000000000C2 /* URLResolverTests.swift in Sources */,
+				F1E5700000000000000000C3 /* UnreviewedPRTests.swift in Sources */,
+				F1E5700000000000000000C4 /* RepositoryURLContainingTests.swift in Sources */,
+				F1E5700000000000000000C5 /* Models.swift in Sources */,
+				F1E5700000000000000000C6 /* URLResolver.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -340,6 +401,36 @@
 			};
 			name = Release;
 		};
+		F1E5700000000000000000A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkunTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F1E5700000000000000000A5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkunTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -357,6 +448,15 @@
 			buildConfigurations = (
 				20CB2932F94A4298BD130779 /* Debug */,
 				80B92ED7DBA5444AB078AD73 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1E5700000000000000000A3 /* Build configuration list for PBXNativeTarget "gitkunTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1E5700000000000000000A4 /* Debug */,
+				F1E5700000000000000000A5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
