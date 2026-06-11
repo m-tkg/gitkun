@@ -18,6 +18,7 @@
 		9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */; };
 		59806207F04D46F5ABC13E08 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC372F9CD2104307A4D34592 /* AppState.swift */; };
 		157ED7DB719B4D1689127BFE /* NotificationMenuItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1FCB9480984C45B6BABC77 /* NotificationMenuItemView.swift */; };
+		AAAA1111BBBB2222CCCC3334 /* SelfUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA1111BBBB2222CCCC3333 /* SelfUpdater.swift */; };
 		3D1D1BC5A24847B9A3689B98 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9C34FAE0C7CA42869ABDF0D5 /* Info.plist */; };
 		5A77D80A2A954A14A3716057 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC8B5679344E4C9892C76324 /* UserNotifications.framework */; };
 		2D39B2F518094040BC886893 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F52D63A5C114391BE53F483 /* ServiceManagement.framework */; };
@@ -36,6 +37,7 @@
 		F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
 		CC372F9CD2104307A4D34592 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		AF1FCB9480984C45B6BABC77 /* NotificationMenuItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationMenuItemView.swift; sourceTree = "<group>"; };
+		AAAA1111BBBB2222CCCC3333 /* SelfUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelfUpdater.swift; sourceTree = "<group>"; };
 		9C34FAE0C7CA42869ABDF0D5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BC8B5679344E4C9892C76324 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		3F52D63A5C114391BE53F483 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
@@ -86,6 +88,7 @@
 				F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */,
 				CC372F9CD2104307A4D34592 /* AppState.swift */,
 				AF1FCB9480984C45B6BABC77 /* NotificationMenuItemView.swift */,
+				AAAA1111BBBB2222CCCC3333 /* SelfUpdater.swift */,
 				9C34FAE0C7CA42869ABDF0D5 /* Info.plist */,
 				73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */,
 			);
@@ -167,6 +170,7 @@
 				9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */,
 				59806207F04D46F5ABC13E08 /* AppState.swift in Sources */,
 				157ED7DB719B4D1689127BFE /* NotificationMenuItemView.swift in Sources */,
+				AAAA1111BBBB2222CCCC3334 /* SelfUpdater.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

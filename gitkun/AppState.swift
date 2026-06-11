@@ -29,6 +29,7 @@ final class AppState: ObservableObject {
     private let poller: NotificationPoller
     let notifier = UserNotifier()
     let launchManager = LaunchAtLoginManager()
+    private let selfUpdater: SelfUpdater
 
     /// 更新チェック用タイマー（約1時間ごと）。
     private var updateTimer: Timer?
@@ -43,6 +44,7 @@ final class AppState: ObservableObject {
 
     init() {
         self.poller = NotificationPoller(interval: LocalStore.shared.pollingInterval.rawValue)
+        self.selfUpdater = SelfUpdater(service: service)
         self.poller.delegate = self
     }
 
@@ -88,6 +90,13 @@ final class AppState: ObservableObject {
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    /// 現在表示中の更新を適用する。成功時はアプリが終了するため戻らない。失敗時は throw。
+    func performUpdate() async throws {
+        guard let release = availableUpdate else { return }
+        logger.info("Starting self-update to \(release.tagName, privacy: .public)")
+        try await selfUpdater.performUpdate(to: release)
     }
 
     // MARK: - 削除

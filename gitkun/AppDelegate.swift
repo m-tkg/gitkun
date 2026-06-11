@@ -85,9 +85,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 更新あり（最新リリースが自バージョンより新しいときのみ表示）
         if let update = appState.availableUpdate {
-            let updateItem = NSMenuItem(title: "⬆ Update available: \(update.tagName)",
-                                        action: #selector(openUpdate), keyEquivalent: "")
+            let updateItem = NSMenuItem(title: "⬆ Update to \(update.tagName)…",
+                                        action: #selector(installUpdate), keyEquivalent: "")
             updateItem.target = self
+            updateItem.isEnabled = !appState.isFetching
             menu.addItem(updateItem)
             menu.addItem(.separator())
         }
@@ -205,9 +206,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func doRefresh()    { appState.fetchNow() }
     @objc private func toggleLogin()  { appState.launchManager.toggle() }
-    @objc private func openUpdate() {
-        guard let urlString = appState.availableUpdate?.htmlUrl,
-              let url = URL(string: urlString) else { return }
+    @objc private func installUpdate() {
+        guard let update = appState.availableUpdate else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Update to \(update.tagName)?"
+        alert.informativeText = "gitkun will quit and relaunch with the new version."
+        alert.addButton(withTitle: "Update")
+        alert.addButton(withTitle: "View Release")
+        alert.addButton(withTitle: "Cancel")
+
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            Task { @MainActor in
+                do {
+                    try await appState.performUpdate()
+                } catch {
+                    presentUpdateError(error, releaseURL: update.htmlUrl)
+                }
+            }
+        case .alertSecondButtonReturn:
+            openReleasePage(update.htmlUrl)
+        default:
+            break
+        }
+    }
+
+    private func presentUpdateError(_ error: Error, releaseURL: String) {
+        let alert = NSAlert()
+        alert.messageText = "Update failed"
+        alert.informativeText = error.localizedDescription
+        alert.addButton(withTitle: "View Release")
+        alert.addButton(withTitle: "Close")
+        if alert.runModal() == .alertFirstButtonReturn {
+            openReleasePage(releaseURL)
+        }
+    }
+
+    private func openReleasePage(_ urlString: String) {
+        guard let url = URL(string: urlString) else { return }
         NSWorkspace.shared.open(url)
     }
     @objc private func doQuit()       { NSApplication.shared.terminate(nil) }
