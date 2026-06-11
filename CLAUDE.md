@@ -196,7 +196,7 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 
 - 通知: タイトル `"GitHub Notifications"`、本文 `"PR title (+N more)"`、音は `unreadSoundName`
 - レビュー依頼: タイトル `"GitHub Review Requests"`、本文 `"PR title (+N more)"`、音は `reviewSoundName`
-- アプリ更新通知の音は `unreadSoundName` に追従
+- アプリ更新通知の音は `updateSoundName`
 
 ### クリック時
 
@@ -220,7 +220,7 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 
 ## 更新チェック・自己更新
 
-- 起動時に1回、以降は約1時間ごとに `gh api /repos/m-tkg/gitkun/releases/latest` で最新リリースを確認（`Poller` の第2インスタンス）
+- 起動時に1回、以降は約1時間ごとに `gh api /repos/m-tkg/gitkun/releases/latest` で最新リリースを確認（`Poller` の第2インスタンス）。手動 Refresh 時にも確認する
 - `VersionComparator` がタグ（`v` プレフィックス可）と `CFBundleShortVersionString` を数値比較し、新しければ `AppState.availableUpdate` にセット
 - 新バージョンを初めて検知したときだけ通知バナー + 音（`lastNotifiedReleaseTag` で再通知を抑止）
 - メニューに `⬆ Update to vX.Y.Z…` 項目が出現。実行すると `SelfUpdater` が:
@@ -315,6 +315,7 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 | `soundEnabled` | Bool | `true` |
 | `unreadSoundName` | String | `"Glass"` |
 | `reviewSoundName` | String | `"Glass"` |
+| `updateSoundName` | String | `"Glass"` |
 | `knownNotificationIDs` | [String] | `[]` |
 | `knownUnreviewedPRIDs` | [Int] | `[]` |
 | `lastNotifiedReleaseTag` | String? | `nil` |

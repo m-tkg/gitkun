@@ -86,7 +86,7 @@ final class AppState: ObservableObject {
                           body: "\(release.tagName) is available (current \(currentVersion))",
                           url: url)
             if store.soundEnabled {
-                notifier.playSound(named: store.unreadSoundName)
+                notifier.playSound(named: store.updateSoundName)
             }
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
@@ -117,8 +117,12 @@ final class AppState: ObservableObject {
 
     // MARK: - フェッチ
 
+    /// 手動 Refresh。通常のフェッチに加えて最新リリースの確認も行う。
     func fetchNow() {
-        Task { await performFetch() }
+        Task {
+            await performFetch()
+            await checkForUpdate()
+        }
     }
 
     func performFetch() async {
