@@ -100,6 +100,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refresh.isEnabled = !appState.isFetching
         menu.addItem(refresh)
 
+        let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
+
         let loginTitle = appState.launchManager.isEnabled ? "Launch at login: ON" : "Launch at login: OFF"
         let login = NSMenuItem(title: loginTitle, action: #selector(toggleLogin), keyEquivalent: "")
         login.target = self
@@ -207,6 +211,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func doRefresh()    { appState.fetchNow() }
     @objc private func toggleLogin()  { appState.launchManager.toggle() }
+
+    /// SwiftUI の Settings シーンを開く。LSUIElement アプリのため前面化が必要。
+    @objc private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
+    }
     @objc private func installUpdate() {
         guard let update = appState.availableUpdate else { return }
 

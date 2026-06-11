@@ -194,8 +194,9 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 
 ### 内容
 
-- 通知: タイトル `"GitHub Notifications"`、本文 `"PR title (+N more)"`
-- レビュー依頼: タイトル `"GitHub Review Requests"`、本文 `"PR title (+N more)"`
+- 通知: タイトル `"GitHub Notifications"`、本文 `"PR title (+N more)"`、音は `unreadSoundName`
+- レビュー依頼: タイトル `"GitHub Review Requests"`、本文 `"PR title (+N more)"`、音は `reviewSoundName`
+- アプリ更新通知の音は `unreadSoundName` に追従
 
 ### クリック時
 
@@ -284,6 +285,7 @@ Status ▶                 ← サブメニュー
 ⬆ Update to vX.Y.Z…      ← 新バージョン検知時のみ表示
 ────────────────────
 Refresh                   ← フェッチ中は disabled
+Settings…                 ← 通知音設定ウィンドウを開く（⌘,）
 Launch at login: ON/OFF
 ────────────────────
 Quit
@@ -312,11 +314,16 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 |---|---|---|
 | `pollingInterval` | Int | 30 |
 | `soundEnabled` | Bool | `true` |
+| `unreadSoundName` | String | `"Glass"` |
+| `reviewSoundName` | String | `"Glass"` |
 | `knownNotificationIDs` | [String] | `[]` |
 | `knownUnreviewedPRIDs` | [Int] | `[]` |
 | `lastNotifiedReleaseTag` | String? | `nil` |
 
-設定 UI（ポーリング間隔・通知音）はメニューに未実装。`LocalStore` 経由で変更可能。
+通知音はメニューの `Settings…`（SwiftUI Settings シーン、`SettingsView.swift`）から変更できる。
+未読通知用とレビュー依頼用で別の音を設定でき、選択肢は `/System/Library/Sounds` から実行時に列挙、
+選択時にプレビュー再生する。`@AppStorage` と `LocalStore` は同じ UserDefaults キーを共有する。
+その他の設定（ポーリング間隔・音の ON/OFF）は UI 未実装で `LocalStore` 経由で変更可能。
 旧キー `diffStrategy` / `knownNotificationUpdatedAts` は廃止済みで、起動時に削除される。
 
 ---
@@ -338,6 +345,7 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
+| `SettingsView.swift` | 通知音設定の SwiftUI ビュー（Settings シーン）+ システムサウンド列挙 |
 | `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem`, `ReleaseInfo`, `VersionComparator` 等） |
 
 ---
