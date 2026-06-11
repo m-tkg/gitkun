@@ -1,10 +1,11 @@
 import SwiftUI
 import AppKit
 
-/// 設定画面（通知音・Launch at login）。
+/// 設定画面（通知音・Launch at login・バージョン情報）。
 /// `@AppStorage` のキーは `LocalStore` と共有しており、保存先は同じ UserDefaults。
 struct SettingsView: View {
 
+    @ObservedObject var appState: AppState
     @ObservedObject var launchManager: LaunchAtLoginManager
 
     @AppStorage("unreadSoundName") private var unreadSoundName = "Glass"
@@ -39,6 +40,13 @@ struct SettingsView: View {
                     launchManager.toggle()
                 }
             ))
+
+            Divider()
+
+            Text("Current version: \(appState.currentVersion)")
+                .foregroundColor(.secondary)
+            Text("Latest release: \(appState.latestReleaseTag ?? "—")")
+                .foregroundColor(.secondary)
         }
         .padding(20)
         .frame(width: 360)

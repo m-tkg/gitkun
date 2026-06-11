@@ -19,6 +19,8 @@ final class AppState: ObservableObject {
     @Published var lastErrorDetail: String? = nil
     /// 自分より新しいリリースが見つかったとき非 nil。
     @Published var availableUpdate: ReleaseInfo? = nil
+    /// 最後に取得した最新リリースのタグ（新旧問わず）。設定画面の表示用。
+    @Published var latestReleaseTag: String? = nil
 
     // MARK: - 依存オブジェクト
 
@@ -72,6 +74,7 @@ final class AppState: ObservableObject {
     func checkForUpdate() async {
         do {
             let release = try await service.fetchLatestRelease()
+            latestReleaseTag = release.tagName
             guard VersionComparator.isNewer(tag: release.tagName, than: currentVersion) else {
                 availableUpdate = nil
                 return
