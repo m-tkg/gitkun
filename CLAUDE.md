@@ -42,6 +42,9 @@ make debug
 # Release ビルド
 make release
 
+# ユニットテスト（gitkunTests）
+make test
+
 # ビルド成果物削除
 make clean
 ```
@@ -60,6 +63,15 @@ make clean
 - メニューから通知一覧、レビュー依頼一覧、My PRs / Assigned Issues 一覧を表示
 - 項目クリックでブラウザ遷移 + リストから即削除（次ポーリングで再取得）
 - **未読/未レビューの組み合わせに応じてメニューバーアイコンが4通りに切り替わる**（My PRs / Assigned Issues はアイコン状態に影響しない）
+- 約1時間ごとに自リポジトリ（`m-tkg/gitkun`）の最新リリースを確認し、新バージョンがあれば通知 + メニューから自己更新できる（後述「更新チェック・自己更新」）
+
+### 未レビュー PR の WIP フィルタ
+
+以下の PR は review 待ちと判定せず、Review Requests に表示しない（`UnreviewedPR.isReviewWaiting`）:
+
+- draft PR
+- タイトルが `[WIP]` で始まる（大文字小文字は区別しない）
+- `wip` ラベルが付いている（大文字小文字は区別しない）
 
 ---
 
@@ -117,7 +129,7 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 ## ポーリング仕様
 
 - デフォルト: 30秒
-- 起動時に即フェッチ（`NotificationPoller.start()` が即時1回発火）
+- 起動時に即フェッチ（`Poller.start()` が即時1回発火）
 - 1ポーリングで通知・レビュー依頼・assignee:@me・author:@me を `async let` で並行フェッチ（4 本）
 - ポーリング制御: `isFetching` フラグで同時実行を防止
 - 一部の API が失敗しても、成功した分の結果は反映する（エラー詳細は `lastErrorDetail` に連結）
@@ -127,14 +139,15 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 
 ## 新規判定
 
+差分判定と My PRs マージの純粋ロジックは `FetchDiff.swift` に分離されており、ユニットテストの対象。
+
 ### 通知
 
-- デフォルト: `id` の差分で判定
-- オプション: `updated_at` ベース（`DiffStrategy.updatedAt`）
+- `id` の差分で判定（`FetchDiff.newItems`。フェッチ結果から消えた ID は既知集合に残らない）
 
 ### 未レビュー PR
 
-- `id` の差分で判定のみ（`UnreviewedPR.id` は `Int`、キャッシュも `Set<Int>` で統一）
+- 同じく `id` の差分で判定（`UnreviewedPR.id` は `Int`、キャッシュも `Set<Int>` で統一）
 
 ### My PRs / Assigned Issues
 
@@ -152,7 +165,7 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 
 - 通常: テンプレート画像（`MenuBarIcon`、ライト/ダーク自動対応）
 - **未読あり / 未レビューありの組み合わせでアイコンを切り替え**
-  - `AppDelegate` が `appState.$hasUnread` と `appState.$hasUnreviewed` を `combineLatest` で監視し、`NSStatusItem.button?.image` を直接差し替え
+  - `AppDelegate` が `appState.$notifications` / `appState.$unreviewedPRs` の `isEmpty` を `combineLatest` で監視し、`NSStatusItem.button?.image` を直接差し替え（未読/未レビューの有無はリストから導出。専用フラグは持たない）
   - `MenuBarExtra` は使用しない（ラベルが静的レンダリングのため動的更新不可）
 
 | 未読 | 未レビュー | 使用アセット |
@@ -204,6 +217,19 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 
 ---
 
+## 更新チェック・自己更新
+
+- 起動時に1回、以降は約1時間ごとに `gh api /repos/m-tkg/gitkun/releases/latest` で最新リリースを確認（`Poller` の第2インスタンス）
+- `VersionComparator` がタグ（`v` プレフィックス可）と `CFBundleShortVersionString` を数値比較し、新しければ `AppState.availableUpdate` にセット
+- 新バージョンを初めて検知したときだけ通知バナー + 音（`lastNotifiedReleaseTag` で再通知を抑止）
+- メニューに `⬆ Update to vX.Y.Z…` 項目が出現。実行すると `SelfUpdater` が:
+  1. `gh release download` で zip を取得
+  2. `ditto` で展開し、Bundle ID を検証
+  3. 旧プロセス終了を待って `.app` を入れ替える切り離しシェルスクリプトを起動し、自身は終了
+- 更新チェックの失敗はログのみで `status` には影響させない
+
+---
+
 ## メニューバー UI
 
 通知セクションは `reason` で一次グルーピングする。グループは固定優先順（`NotificationReason.allCases` の宣言順）で並べ、未知 reason は末尾にアルファベット順で付ける。各ヘッダーに件数を併記。
@@ -245,6 +271,7 @@ Assigned Issues (M)       ← 別セクション
 ────────────────────
 Status ▶                 ← サブメニュー
   Status: OK
+  Version: X.Y.Z
   Unread: X
   Review requests: Y
   My PRs: N
@@ -253,6 +280,8 @@ Status ▶                 ← サブメニュー
   [エラー詳細]            ← エラー時のみ
   [Copy Error]            ← エラー時のみ
   [Open Console.app]      ← エラー時のみ
+────────────────────
+⬆ Update to vX.Y.Z…      ← 新バージョン検知時のみ表示
 ────────────────────
 Refresh                   ← フェッチ中は disabled
 Launch at login: ON/OFF
@@ -282,13 +311,13 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 | キー | 型 | デフォルト |
 |---|---|---|
 | `pollingInterval` | Int | 30 |
-| `diffStrategy` | String | `"id"` |
 | `soundEnabled` | Bool | `true` |
 | `knownNotificationIDs` | [String] | `[]` |
-| `knownNotificationUpdatedAts` | [String:String] | `[:]` |
-| `knownUnreviewedPRIDs` | [String] | `[]` |
+| `knownUnreviewedPRIDs` | [Int] | `[]` |
+| `lastNotifiedReleaseTag` | String? | `nil` |
 
-設定 UI（ポーリング間隔・差分方式・通知音）はメニューに未実装。`LocalStore` 経由で変更可能。
+設定 UI（ポーリング間隔・通知音）はメニューに未実装。`LocalStore` 経由で変更可能。
+旧キー `diffStrategy` / `knownNotificationUpdatedAts` は廃止済みで、起動時に削除される。
 
 ---
 
@@ -298,15 +327,18 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 |---|---|
 | `gitkunApp.swift` | `@main`、`NSApplicationDelegateAdaptor`、二重起動防止 |
 | `AppDelegate.swift` | `NSStatusItem` 管理、`NSMenu` 構築、アイコン切り替え（Combine） |
-| `AppState.swift` | `@MainActor ObservableObject`、状態管理、差分判定、通知発火（通知・未レビュー PR・My PRs / Assigned Issues の並行処理、PR は assignee + author マージ） |
-| `GitHubNotificationService.swift` | `actor`、`gh` CLI 実行、トークンキャッシュ、通知・未レビュー PR・assignee 検索・author 検索のフェッチ |
-| `NotificationPoller.swift` | `Timer` ポーリング、重複実行防止 |
+| `AppState.swift` | `@MainActor ObservableObject`、状態管理、フェッチのオーケストレーション、通知発火（差分判定・マージは `FetchDiff` に委譲） |
+| `FetchDiff.swift` | 差分判定・My PRs マージの純関数（テスト対象） |
+| `GitHubNotificationService.swift` | `actor`、`gh` CLI 実行、トークンキャッシュ、通知・未レビュー PR・assignee 検索・author 検索・リリース取得のフェッチ |
+| `ProcessRunner.swift` | 外部コマンド実行の共通ランナー（pipe ストリーム読みで deadlock 回避） |
+| `Poller.swift` | `Timer` の closure ベースラッパー（通知ポーリングと更新チェックで2インスタンス使用） |
+| `SelfUpdater.swift` | 最新リリース zip の取得・展開・`.app` 入れ替え・再起動 |
 | `LocalStore.swift` | `UserDefaults` ラッパー |
 | `UserNotifier.swift` | `UNUserNotificationCenter`、通知クリックでブラウザ起動 |
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
-| `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem` 等） |
+| `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem`, `ReleaseInfo`, `VersionComparator` 等） |
 
 ---
 
@@ -318,6 +350,8 @@ gitkun/
 ├── README.md
 ├── Makefile
 ├── gitkun.xcodeproj/
+├── gitkunTests/              # ユニットテスト（純粋ロジックのみ。アプリは起動しない）
+│   └── *Tests.swift
 └── gitkun/
     ├── Info.plist            # LSUIElement=YES
     ├── Assets.xcassets/
@@ -328,6 +362,13 @@ gitkun/
     │   └── MenuBarIconUnreadAndUnreview.imageset/  # 両方ありアイコン（original）
     └── *.swift
 ```
+
+### テスト
+
+- `gitkunTests` は TEST_HOST を使わず、テスト対象の純粋ロジック（`Models.swift`・`URLResolver.swift`・`FetchDiff.swift`）を直接コンパイルする方式
+  - アプリを起動しないため、テスト実行時に GitHub ポーリングや通知権限ダイアログが発生しない
+  - 新たにテスト対象のソースを増やす場合は、そのファイルを `gitkunTests` ターゲットの Sources にも追加する（AppKit 依存のないファイルに限る）
+- 実行は `make test`
 
 ---
 

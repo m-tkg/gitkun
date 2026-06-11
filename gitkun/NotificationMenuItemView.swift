@@ -77,11 +77,16 @@ final class NotificationMenuItemView: NSView {
         return f
     }
 
+    private static let iso8601Formatter = ISO8601DateFormatter()
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .abbreviated
+        return f
+    }()
+
     private var relativeTime: String {
-        guard let date = ISO8601DateFormatter().date(from: updatedAt) else { return "" }
-        let rel = RelativeDateTimeFormatter()
-        rel.unitsStyle = .abbreviated
-        return rel.localizedString(for: date, relativeTo: Date())
+        guard let date = Self.iso8601Formatter.date(from: updatedAt) else { return "" }
+        return Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
     }
 
     // MARK: - ホバーハイライト

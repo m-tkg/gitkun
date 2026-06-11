@@ -197,11 +197,6 @@ extension AssignedItem: MenuRowDisplayable {
 
 // MARK: - 設定・ステータス
 
-enum DiffStrategy: String {
-    case id
-    case updatedAt
-}
-
 enum PollingInterval: Int {
     case sec15 = 15
     case sec30 = 30

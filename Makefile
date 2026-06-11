@@ -5,7 +5,7 @@ BUILD_DIR = .build
 RELEASE   = $(BUILD_DIR)/Build/Products/Release
 DEBUG     = $(BUILD_DIR)/Build/Products/Debug
 
-.PHONY: build release debug run clean
+.PHONY: build release debug run test clean
 
 ## Debug ビルド（デフォルト）
 build: debug
@@ -27,6 +27,13 @@ release:
 	           -configuration Release \
 	           -derivedDataPath $(BUILD_DIR) \
 	           build
+
+## ユニットテスト
+test:
+	xcodebuild test -project $(PROJECT) \
+	           -scheme $(SCHEME) \
+	           -destination 'platform=macOS' \
+	           -derivedDataPath $(BUILD_DIR)
 
 ## Debug ビルドして起動（既存プロセスを終了してから起動）
 run: debug

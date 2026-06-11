@@ -6,12 +6,16 @@ final class LocalStore {
 
     private enum Keys {
         static let knownIDs = "knownNotificationIDs"
-        static let knownUpdatedAts = "knownNotificationUpdatedAts"
         static let knownUnreviewedIDs = "knownUnreviewedPRIDs"
         static let pollingInterval = "pollingInterval"
-        static let diffStrategy = "diffStrategy"
         static let soundEnabled = "soundEnabled"
         static let lastNotifiedReleaseTag = "lastNotifiedReleaseTag"
+    }
+
+    private init() {
+        // 廃止した updatedAt 差分方式の残骸を掃除する
+        defaults.removeObject(forKey: "knownNotificationUpdatedAts")
+        defaults.removeObject(forKey: "diffStrategy")
     }
 
     var knownIDs: Set<String> {
@@ -24,25 +28,12 @@ final class LocalStore {
         set { defaults.set(Array(newValue), forKey: Keys.knownUnreviewedIDs) }
     }
 
-    var knownUpdatedAts: [String: String] {
-        get { (defaults.dictionary(forKey: Keys.knownUpdatedAts) as? [String: String]) ?? [:] }
-        set { defaults.set(newValue, forKey: Keys.knownUpdatedAts) }
-    }
-
     var pollingInterval: PollingInterval {
         get {
             let raw = defaults.integer(forKey: Keys.pollingInterval)
             return PollingInterval(rawValue: raw) ?? .sec30
         }
         set { defaults.set(newValue.rawValue, forKey: Keys.pollingInterval) }
-    }
-
-    var diffStrategy: DiffStrategy {
-        get {
-            let raw = defaults.string(forKey: Keys.diffStrategy) ?? ""
-            return DiffStrategy(rawValue: raw) ?? .id
-        }
-        set { defaults.set(newValue.rawValue, forKey: Keys.diffStrategy) }
     }
 
     var soundEnabled: Bool {

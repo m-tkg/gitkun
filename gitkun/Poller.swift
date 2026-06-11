@@ -1,24 +1,22 @@
 import Foundation
 
-protocol NotificationPollerDelegate: AnyObject {
-    func pollerDidFire()
-}
-
-final class NotificationPoller {
-
-    weak var delegate: NotificationPollerDelegate?
+/// 一定間隔で `onFire` を呼ぶタイマー。`start()` 時に即時 1 回発火する。
+/// 通知ポーリングと更新チェックの両方で使う。
+final class Poller {
 
     private var timer: Timer?
     private var interval: TimeInterval
+    private let onFire: () -> Void
 
-    init(interval: Int) {
+    init(interval: Int, onFire: @escaping () -> Void) {
         self.interval = TimeInterval(interval)
+        self.onFire = onFire
     }
 
     func start() {
         scheduleTimer()
-        // 起動時に即フェッチ
-        delegate?.pollerDidFire()
+        // 起動時に即発火
+        onFire()
     }
 
     func updateInterval(_ newInterval: Int) {
@@ -29,7 +27,7 @@ final class NotificationPoller {
 
     private func scheduleTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.delegate?.pollerDidFire()
+            self?.onFire()
         }
         RunLoop.main.add(timer!, forMode: .common)
     }
