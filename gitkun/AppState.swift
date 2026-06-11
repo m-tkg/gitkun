@@ -1,5 +1,8 @@
 import Foundation
 import Combine
+import OSLog
+
+private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "AppState")
 
 @MainActor
 final class AppState: ObservableObject {
@@ -16,6 +19,8 @@ final class AppState: ObservableObject {
     @Published var lastErrorDetail: String? = nil
     @Published var hasUnread: Bool = false
     @Published var hasUnreviewed: Bool = false
+    /// 自分より新しいリリースが見つかったとき非 nil。
+    @Published var availableUpdate: ReleaseInfo? = nil
 
     // MARK: - 依存オブジェクト
 
@@ -24,16 +29,74 @@ final class AppState: ObservableObject {
     private let poller: NotificationPoller
     let notifier = UserNotifier()
     let launchManager = LaunchAtLoginManager()
+    private let selfUpdater: SelfUpdater
+
+    /// 更新チェック用タイマー（約1時間ごと）。
+    private var updateTimer: Timer?
+    private static let updateCheckInterval: TimeInterval = 3600
+
+    /// 実行中アプリのバージョン（`CFBundleShortVersionString`）。
+    var currentVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+    }
 
     // MARK: - 初期化
 
     init() {
         self.poller = NotificationPoller(interval: LocalStore.shared.pollingInterval.rawValue)
+        self.selfUpdater = SelfUpdater(service: service)
         self.poller.delegate = self
     }
 
     func startPolling() {
         poller.start()
+        startUpdateChecking()
+    }
+
+    // MARK: - 更新チェック
+
+    /// 起動時に1回、以降は約1時間ごとに最新リリースを確認する。
+    private func startUpdateChecking() {
+        Task { await checkForUpdate() }
+        let timer = Timer.scheduledTimer(withTimeInterval: Self.updateCheckInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in await self?.checkForUpdate() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        updateTimer = timer
+    }
+
+    /// 最新リリースを取得し、自バージョンより新しければ `availableUpdate` を更新する。
+    /// 新バージョンを初めて検知したときだけバナー + 音を出す（同一バージョンでは再通知しない）。
+    /// 補助機能のため、失敗時はログのみでステータスには影響させない。
+    func checkForUpdate() async {
+        do {
+            let release = try await service.fetchLatestRelease()
+            guard VersionComparator.isNewer(tag: release.tagName, than: currentVersion) else {
+                availableUpdate = nil
+                return
+            }
+            availableUpdate = release
+            logger.info("Update available: \(release.tagName, privacy: .public) (current \(self.currentVersion, privacy: .public))")
+
+            guard store.lastNotifiedReleaseTag != release.tagName else { return }
+            store.lastNotifiedReleaseTag = release.tagName
+            let url = URL(string: release.htmlUrl) ?? URL(string: "https://github.com")!
+            notifier.send(title: "gitkun Update Available",
+                          body: "\(release.tagName) is available (current \(currentVersion))",
+                          url: url)
+            if store.soundEnabled {
+                notifier.playSound()
+            }
+        } catch {
+            logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// 現在表示中の更新を適用する。成功時はアプリが終了するため戻らない。失敗時は throw。
+    func performUpdate() async throws {
+        guard let release = availableUpdate else { return }
+        logger.info("Starting self-update to \(release.tagName, privacy: .public)")
+        try await selfUpdater.performUpdate(to: release)
     }
 
     // MARK: - 削除

@@ -47,6 +47,32 @@ actor GitHubNotificationService {
                               label: "authored PRs")
     }
 
+    func fetchLatestRelease() async throws -> ReleaseInfo {
+        try await fetch("/repos/\(Self.repoFullName)/releases/latest",
+                        as: ReleaseInfo.self,
+                        label: "latest release")
+    }
+
+    /// 更新チェック対象リポジトリ（自分自身）。
+    private static let repoFullName = "m-tkg/gitkun"
+
+    /// 指定タグのリリースから zip 資産を `directory` にダウンロードする。
+    func downloadLatestReleaseZip(tag: String, into directory: URL) async throws {
+        guard let ghPath = Self.findGHPath() else {
+            logger.error("gh not found in known paths")
+            throw AppError.ghNotFound
+        }
+        let token = try await resolveToken(ghPath: ghPath)
+        logger.info("Downloading release \(tag, privacy: .public)")
+        _ = try await runProcess(executable: ghPath,
+                                 arguments: ["release", "download", tag,
+                                             "--repo", Self.repoFullName,
+                                             "--pattern", "*.zip",
+                                             "--dir", directory.path,
+                                             "--clobber"],
+                                 token: token)
+    }
+
     // MARK: - フェッチ共通
 
     private func fetch<T: Decodable>(_ endpoint: String, as type: T.Type, label: String) async throws -> T {

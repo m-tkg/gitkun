@@ -83,6 +83,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(buildStatusMenuItem())
         menu.addItem(.separator())
 
+        // 更新あり（最新リリースが自バージョンより新しいときのみ表示）
+        if let update = appState.availableUpdate {
+            let updateItem = NSMenuItem(title: "⬆ Update to \(update.tagName)…",
+                                        action: #selector(installUpdate), keyEquivalent: "")
+            updateItem.target = self
+            updateItem.isEnabled = !appState.isFetching
+            menu.addItem(updateItem)
+            menu.addItem(.separator())
+        }
+
         // 設定
         let refresh = NSMenuItem(title: "Refresh", action: #selector(doRefresh), keyEquivalent: "")
         refresh.target = self
@@ -159,6 +169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let statusMenuItem = NSMenuItem(title: "Status", action: nil, keyEquivalent: "")
         let statusMenu = NSMenu(title: "Status")
         statusMenu.addItem(disabled: statusLabel)
+        statusMenu.addItem(disabled: "Version: \(appState.currentVersion)")
         statusMenu.addItem(disabled: "Unread: \(appState.notifications.count)")
         statusMenu.addItem(disabled: "Review requests: \(appState.unreviewedPRs.count)")
         statusMenu.addItem(disabled: "My PRs: \(appState.myPRs.count)")
@@ -195,6 +206,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func doRefresh()    { appState.fetchNow() }
     @objc private func toggleLogin()  { appState.launchManager.toggle() }
+    @objc private func installUpdate() {
+        guard let update = appState.availableUpdate else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Update to \(update.tagName)?"
+        alert.informativeText = "gitkun will quit and relaunch with the new version."
+        alert.addButton(withTitle: "Update")
+        alert.addButton(withTitle: "View Release")
+        alert.addButton(withTitle: "Cancel")
+
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            Task { @MainActor in
+                do {
+                    try await appState.performUpdate()
+                } catch {
+                    presentUpdateError(error, releaseURL: update.htmlUrl)
+                }
+            }
+        case .alertSecondButtonReturn:
+            openReleasePage(update.htmlUrl)
+        default:
+            break
+        }
+    }
+
+    private func presentUpdateError(_ error: Error, releaseURL: String) {
+        let alert = NSAlert()
+        alert.messageText = "Update failed"
+        alert.informativeText = error.localizedDescription
+        alert.addButton(withTitle: "View Release")
+        alert.addButton(withTitle: "Close")
+        if alert.runModal() == .alertFirstButtonReturn {
+            openReleasePage(releaseURL)
+        }
+    }
+
+    private func openReleasePage(_ urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        NSWorkspace.shared.open(url)
+    }
     @objc private func doQuit()       { NSApplication.shared.terminate(nil) }
     @objc private func copyError() {
         guard let d = appState.lastErrorDetail else { return }
