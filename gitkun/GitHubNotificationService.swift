@@ -30,8 +30,11 @@ actor GitHubNotificationService {
     }
 
     func fetchUnreviewedPRs() async throws -> [UnreviewedPR] {
-        try await fetchSearch("/search/issues?q=is:open+is:pr+review-requested:@me&per_page=50",
-                              label: "unreviewed PRs")
+        let prs: [UnreviewedPR] = try await fetchSearch(
+            "/search/issues?q=is:open+is:pr+review-requested:@me&per_page=50",
+            label: "unreviewed PRs")
+        // draft / タイトル先頭 [WIP] / wip ラベルは review 待ちと判定しない
+        return prs.filter(\.isReviewWaiting)
     }
 
     func fetchAssignedItems() async throws -> [AssignedItem] {
