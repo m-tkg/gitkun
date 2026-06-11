@@ -9,6 +9,7 @@ struct SettingsView: View {
 
     @AppStorage("unreadSoundName") private var unreadSoundName = "Glass"
     @AppStorage("reviewSoundName") private var reviewSoundName = "Glass"
+    @AppStorage("updateSoundName") private var updateSoundName = "Glass"
 
     private let soundNames = SystemSounds.availableNames()
 
@@ -23,6 +24,11 @@ struct SettingsView: View {
                 ForEach(soundNames, id: \.self) { Text($0) }
             }
             .onChange(of: reviewSoundName) { NSSound(named: $0)?.play() }
+
+            Picker("Update available sound:", selection: $updateSoundName) {
+                ForEach(soundNames, id: \.self) { Text($0) }
+            }
+            .onChange(of: updateSoundName) { NSSound(named: $0)?.play() }
 
             Divider()
 
