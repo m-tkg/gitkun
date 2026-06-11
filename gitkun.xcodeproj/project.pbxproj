@@ -13,7 +13,7 @@
 		6D94CF0B6E3D4F2EA8D008F0 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70F2B4C6D444E0A08FA4F3 /* LocalStore.swift */; };
 		4CEF37AA247E478BB683D77C /* GitHubNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73915F00BB0C4AEE9345DDF5 /* GitHubNotificationService.swift */; };
 		0D737AE1346642A6930E0387 /* URLResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA02C1CA31454C828330582F /* URLResolver.swift */; };
-		F72503503A524D80AA54CFC0 /* NotificationPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = C78A71F98ED34CC0A582747D /* NotificationPoller.swift */; };
+		F72503503A524D80AA54CFC0 /* Poller.swift in Sources */ = {isa = PBXBuildFile; fileRef = C78A71F98ED34CC0A582747D /* Poller.swift */; };
 		2756E1AC36C1473BA66C7FD5 /* UserNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36BC4119AF26466D832EE4DA /* UserNotifier.swift */; };
 		9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */; };
 		59806207F04D46F5ABC13E08 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC372F9CD2104307A4D34592 /* AppState.swift */; };
@@ -42,7 +42,7 @@
 		DD70F2B4C6D444E0A08FA4F3 /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		73915F00BB0C4AEE9345DDF5 /* GitHubNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubNotificationService.swift; sourceTree = "<group>"; };
 		DA02C1CA31454C828330582F /* URLResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResolver.swift; sourceTree = "<group>"; };
-		C78A71F98ED34CC0A582747D /* NotificationPoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPoller.swift; sourceTree = "<group>"; };
+		C78A71F98ED34CC0A582747D /* Poller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Poller.swift; sourceTree = "<group>"; };
 		36BC4119AF26466D832EE4DA /* UserNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserNotifier.swift; sourceTree = "<group>"; };
 		F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
 		CC372F9CD2104307A4D34592 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -111,7 +111,7 @@
 				73915F00BB0C4AEE9345DDF5 /* GitHubNotificationService.swift */,
 				F1E5700000000000000000B8 /* ProcessRunner.swift */,
 				DA02C1CA31454C828330582F /* URLResolver.swift */,
-				C78A71F98ED34CC0A582747D /* NotificationPoller.swift */,
+				C78A71F98ED34CC0A582747D /* Poller.swift */,
 				36BC4119AF26466D832EE4DA /* UserNotifier.swift */,
 				F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */,
 				CC372F9CD2104307A4D34592 /* AppState.swift */,
@@ -224,7 +224,7 @@
 				4CEF37AA247E478BB683D77C /* GitHubNotificationService.swift in Sources */,
 				F1E5700000000000000000CA /* ProcessRunner.swift in Sources */,
 				0D737AE1346642A6930E0387 /* URLResolver.swift in Sources */,
-				F72503503A524D80AA54CFC0 /* NotificationPoller.swift in Sources */,
+				F72503503A524D80AA54CFC0 /* Poller.swift in Sources */,
 				2756E1AC36C1473BA66C7FD5 /* UserNotifier.swift in Sources */,
 				9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */,
 				59806207F04D46F5ABC13E08 /* AppState.swift in Sources */,

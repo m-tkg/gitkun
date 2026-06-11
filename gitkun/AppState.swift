@@ -26,14 +26,14 @@ final class AppState: ObservableObject {
 
     let store = LocalStore.shared
     private let service = GitHubNotificationService()
-    private let poller: NotificationPoller
+    private var poller: Poller?
+    /// 更新チェック用ポーラー（約1時間ごと）。
+    private var updatePoller: Poller?
     let notifier = UserNotifier()
     let launchManager = LaunchAtLoginManager()
     private let selfUpdater: SelfUpdater
 
-    /// 更新チェック用タイマー（約1時間ごと）。
-    private var updateTimer: Timer?
-    private static let updateCheckInterval: TimeInterval = 3600
+    private static let updateCheckInterval = 3600
 
     /// メニューに保持する通知・レビュー依頼の上限件数。
     private static let displayLimit = 20
@@ -48,27 +48,25 @@ final class AppState: ObservableObject {
     // MARK: - 初期化
 
     init() {
-        self.poller = NotificationPoller(interval: LocalStore.shared.pollingInterval.rawValue)
         self.selfUpdater = SelfUpdater(service: service)
-        self.poller.delegate = self
     }
 
+    /// 通知ポーリングと更新チェックを開始する。どちらも開始時に即時 1 回発火する。
     func startPolling() {
-        poller.start()
-        startUpdateChecking()
+        let fetchPoller = Poller(interval: store.pollingInterval.rawValue) { [weak self] in
+            Task { @MainActor in await self?.performFetch() }
+        }
+        poller = fetchPoller
+        fetchPoller.start()
+
+        let updateChecker = Poller(interval: Self.updateCheckInterval) { [weak self] in
+            Task { @MainActor in await self?.checkForUpdate() }
+        }
+        updatePoller = updateChecker
+        updateChecker.start()
     }
 
     // MARK: - 更新チェック
-
-    /// 起動時に1回、以降は約1時間ごとに最新リリースを確認する。
-    private func startUpdateChecking() {
-        Task { await checkForUpdate() }
-        let timer = Timer.scheduledTimer(withTimeInterval: Self.updateCheckInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in await self?.checkForUpdate() }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        updateTimer = timer
-    }
 
     /// 最新リリースを取得し、自バージョンより新しければ `availableUpdate` を更新する。
     /// 新バージョンを初めて検知したときだけバナー + 音を出す（同一バージョンでは再通知しない）。
@@ -244,16 +242,6 @@ private struct FetchErrors {
             details.append(error.errorDescription ?? "\(error)")
             labels.append(error.statusLabel)
             return nil
-        }
-    }
-}
-
-// MARK: - NotificationPollerDelegate
-
-extension AppState: NotificationPollerDelegate {
-    nonisolated func pollerDidFire() {
-        Task { @MainActor in
-            await self.performFetch()
         }
     }
 }
