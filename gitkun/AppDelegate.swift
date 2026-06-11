@@ -105,11 +105,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
-
-        let loginTitle = appState.launchManager.isEnabled ? "Launch at login: ON" : "Launch at login: OFF"
-        let login = NSMenuItem(title: loginTitle, action: #selector(toggleLogin), keyEquivalent: "")
-        login.target = self
-        menu.addItem(login)
         menu.addItem(.separator())
 
         let quit = NSMenuItem(title: "Quit", action: #selector(doQuit), keyEquivalent: "q")
@@ -212,14 +207,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - アクション
 
     @objc private func doRefresh()    { appState.fetchNow() }
-    @objc private func toggleLogin()  { appState.launchManager.toggle() }
 
     /// 設定ウィンドウを開く。
     /// SwiftUI の Settings シーンは macOS 14+ でセレクタ経由の表示がブロックされたため、
     /// 自前の NSWindow + NSHostingController で表示する。
     @objc private func openSettings() {
         if settingsWindow == nil {
-            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
+            let view = SettingsView(launchManager: appState.launchManager)
+            let window = NSWindow(contentViewController: NSHostingController(rootView: view))
             window.title = "gitkun Settings"
             window.styleMask = [.titled, .closable]
             // 閉じてもインスタンスを保持し、再度開けるようにする

@@ -1,9 +1,11 @@
 import SwiftUI
 import AppKit
 
-/// 通知音の設定画面（Settings シーン）。
+/// 設定画面（通知音・Launch at login）。
 /// `@AppStorage` のキーは `LocalStore` と共有しており、保存先は同じ UserDefaults。
 struct SettingsView: View {
+
+    @ObservedObject var launchManager: LaunchAtLoginManager
 
     @AppStorage("unreadSoundName") private var unreadSoundName = "Glass"
     @AppStorage("reviewSoundName") private var reviewSoundName = "Glass"
@@ -21,6 +23,16 @@ struct SettingsView: View {
                 ForEach(soundNames, id: \.self) { Text($0) }
             }
             .onChange(of: reviewSoundName) { NSSound(named: $0)?.play() }
+
+            Divider()
+
+            Toggle("Launch at login", isOn: Binding(
+                get: { launchManager.isEnabled },
+                set: { newValue in
+                    guard newValue != launchManager.isEnabled else { return }
+                    launchManager.toggle()
+                }
+            ))
         }
         .padding(20)
         .frame(width: 360)
