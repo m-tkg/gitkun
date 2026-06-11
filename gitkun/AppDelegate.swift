@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import OSLog
+import SwiftUI
 
 private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "AppDelegate")
 
@@ -10,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     let appState = AppState()
     private var cancellable: AnyCancellable?
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -212,12 +214,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func doRefresh()    { appState.fetchNow() }
     @objc private func toggleLogin()  { appState.launchManager.toggle() }
 
-    /// SwiftUI の Settings シーンを開く。LSUIElement アプリのため前面化が必要。
+    /// 設定ウィンドウを開く。
+    /// SwiftUI の Settings シーンは macOS 14+ でセレクタ経由の表示がブロックされたため、
+    /// 自前の NSWindow + NSHostingController で表示する。
     @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        if settingsWindow == nil {
+            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
+            window.title = "gitkun Settings"
+            window.styleMask = [.titled, .closable]
+            // 閉じてもインスタンスを保持し、再度開けるようにする
+            window.isReleasedWhenClosed = false
+            window.center()
+            settingsWindow = window
         }
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
     @objc private func installUpdate() {
         guard let update = appState.availableUpdate else { return }
