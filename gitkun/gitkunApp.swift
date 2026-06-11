@@ -14,6 +14,8 @@ struct GitkunApp: App {
     }
 
     var body: some Scene {
-        Settings { SettingsView() }
+        // 設定ウィンドウは AppDelegate が NSWindow で管理する
+        // （Settings シーンは macOS 14+ でメニューのセレクタから開けないため未使用）
+        Settings { EmptyView() }
     }
 }
