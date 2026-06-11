@@ -19,8 +19,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.delegate = self
         statusItem.menu = menu
 
-        cancellable = appState.$hasUnread
-            .combineLatest(appState.$hasUnreviewed)
+        // 未読/未レビューの有無は表示中リストから導出する（手動同期はしない）
+        cancellable = appState.$notifications.map { !$0.isEmpty }
+            .combineLatest(appState.$unreviewedPRs.map { !$0.isEmpty })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] unread, unreviewed in
                 let name: String

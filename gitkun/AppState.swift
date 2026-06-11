@@ -17,8 +17,6 @@ final class AppState: ObservableObject {
     @Published var lastChecked: Date? = nil
     @Published var isFetching: Bool = false
     @Published var lastErrorDetail: String? = nil
-    @Published var hasUnread: Bool = false
-    @Published var hasUnreviewed: Bool = false
     /// 自分より新しいリリースが見つかったとき非 nil。
     @Published var availableUpdate: ReleaseInfo? = nil
 
@@ -106,12 +104,10 @@ final class AppState: ObservableObject {
 
     func remove(notification: GitHubNotification) {
         notifications.removeAll { $0.id == notification.id }
-        hasUnread = !notifications.isEmpty
     }
 
     func remove(unreviewedPR: UnreviewedPR) {
         unreviewedPRs.removeAll { $0.id == unreviewedPR.id }
-        hasUnreviewed = !unreviewedPRs.isEmpty
     }
 
     func remove(assignedItem: AssignedItem) {
@@ -185,7 +181,6 @@ final class AppState: ObservableObject {
         store.knownIDs = nextKnown
 
         notifications = Array(fetched.prefix(Self.displayLimit))
-        hasUnread = !notifications.isEmpty
 
         if isFirstFetch { return }
         notifyIfNew(newOnes, title: "GitHub Notifications")
@@ -196,7 +191,6 @@ final class AppState: ObservableObject {
         store.knownUnreviewedIDs = nextKnown
 
         unreviewedPRs = Array(fetched.prefix(Self.displayLimit))
-        hasUnreviewed = !unreviewedPRs.isEmpty
 
         if isFirstFetch { return }
         notifyIfNew(newOnes, title: "GitHub Review Requests")
