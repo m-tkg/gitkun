@@ -213,7 +213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 自前の NSWindow + NSHostingController で表示する。
     @objc private func openSettings() {
         if settingsWindow == nil {
-            let view = SettingsView(launchManager: appState.launchManager)
+            let view = SettingsView(appState: appState, launchManager: appState.launchManager)
             let window = NSWindow(contentViewController: NSHostingController(rootView: view))
             window.title = "gitkun Settings"
             window.styleMask = [.titled, .closable]
