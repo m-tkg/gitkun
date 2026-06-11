@@ -94,6 +94,23 @@ struct UnreviewedPR: Decodable, Identifiable, RepositoryURLContaining {
     let htmlUrl: String
     let repositoryUrl: String
     let updatedAt: String
+    let draft: Bool
+    let labels: [Label]
+
+    struct Label: Decodable {
+        let name: String
+    }
+
+    /// review 待ちとして扱うか。以下は review 待ちと判定しない。
+    /// - draft PR
+    /// - タイトルが `[WIP]` で始まる（大文字小文字は区別しない）
+    /// - `wip` ラベルが付いている（大文字小文字は区別しない）
+    var isReviewWaiting: Bool {
+        if draft { return false }
+        if title.lowercased().hasPrefix("[wip]") { return false }
+        if labels.contains(where: { $0.name.lowercased() == "wip" }) { return false }
+        return true
+    }
 }
 
 /// 自分にアサインされている open な PR / Issue。
