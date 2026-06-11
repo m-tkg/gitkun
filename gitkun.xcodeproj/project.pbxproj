@@ -29,6 +29,7 @@
 		F1E5700000000000000000C4 /* RepositoryURLContainingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */; };
 		F1E5700000000000000000C5 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A003988D46499C91CAC414 /* Models.swift */; };
 		F1E5700000000000000000C6 /* URLResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA02C1CA31454C828330582F /* URLResolver.swift */; };
+		F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B6 /* FetchDiffTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +55,7 @@
 		F1E5700000000000000000B2 /* URLResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResolverTests.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B3 /* UnreviewedPRTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnreviewedPRTests.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryURLContainingTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B6 /* FetchDiffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchDiffTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +124,7 @@
 				F1E5700000000000000000B2 /* URLResolverTests.swift */,
 				F1E5700000000000000000B3 /* UnreviewedPRTests.swift */,
 				F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */,
+				F1E5700000000000000000B6 /* FetchDiffTests.swift */,
 			);
 			path = gitkunTests;
 			sourceTree = "<group>";
@@ -230,6 +233,7 @@
 				F1E5700000000000000000C2 /* URLResolverTests.swift in Sources */,
 				F1E5700000000000000000C3 /* UnreviewedPRTests.swift in Sources */,
 				F1E5700000000000000000C4 /* RepositoryURLContainingTests.swift in Sources */,
+				F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */,
 				F1E5700000000000000000C5 /* Models.swift in Sources */,
 				F1E5700000000000000000C6 /* URLResolver.swift in Sources */,
 			);
