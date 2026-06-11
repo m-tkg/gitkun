@@ -9,6 +9,8 @@ final class LocalStore {
         static let knownUnreviewedIDs = "knownUnreviewedPRIDs"
         static let pollingInterval = "pollingInterval"
         static let soundEnabled = "soundEnabled"
+        static let unreadSoundName = "unreadSoundName"
+        static let reviewSoundName = "reviewSoundName"
         static let lastNotifiedReleaseTag = "lastNotifiedReleaseTag"
     }
 
@@ -43,6 +45,18 @@ final class LocalStore {
                 : defaults.bool(forKey: Keys.soundEnabled)
         }
         set { defaults.set(newValue, forKey: Keys.soundEnabled) }
+    }
+
+    /// 新規未読通知のときに鳴らす音の名前。SettingsView の @AppStorage と同じキー。
+    var unreadSoundName: String {
+        get { defaults.string(forKey: Keys.unreadSoundName) ?? "Glass" }
+        set { defaults.set(newValue, forKey: Keys.unreadSoundName) }
+    }
+
+    /// 新規レビュー依頼のときに鳴らす音の名前。SettingsView の @AppStorage と同じキー。
+    var reviewSoundName: String {
+        get { defaults.string(forKey: Keys.reviewSoundName) ?? "Glass" }
+        set { defaults.set(newValue, forKey: Keys.reviewSoundName) }
     }
 
     /// 最後にバナー通知した最新リリースのタグ。同一バージョンの再通知を抑止する。
