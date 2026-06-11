@@ -178,21 +178,10 @@ final class AppState: ObservableObject {
     // MARK: - 差分判定と通知
 
     private func handleFetchedNotifications(_ fetched: [GitHubNotification], isFirstFetch: Bool) {
-        let newOnes: [GitHubNotification]
-
-        switch store.diffStrategy {
-        case .id:
-            let fetchedIDs = Set(fetched.map(\.id))
-            let newIDs = fetchedIDs.subtracting(store.knownIDs)
-            newOnes = fetched.filter { newIDs.contains($0.id) }
-            store.knownIDs = fetchedIDs
-
-        case .updatedAt:
-            var known = store.knownUpdatedAts
-            newOnes = fetched.filter { known[$0.id] != $0.updatedAt }
-            fetched.forEach { known[$0.id] = $0.updatedAt }
-            store.knownUpdatedAts = known
-        }
+        let fetchedIDs = Set(fetched.map(\.id))
+        let newIDs = fetchedIDs.subtracting(store.knownIDs)
+        let newOnes = fetched.filter { newIDs.contains($0.id) }
+        store.knownIDs = fetchedIDs
 
         notifications = Array(fetched.prefix(20))
         hasUnread = !notifications.isEmpty
