@@ -83,6 +83,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(buildStatusMenuItem())
         menu.addItem(.separator())
 
+        // 更新あり（最新リリースが自バージョンより新しいときのみ表示）
+        if let update = appState.availableUpdate {
+            let updateItem = NSMenuItem(title: "⬆ Update available: \(update.tagName)",
+                                        action: #selector(openUpdate), keyEquivalent: "")
+            updateItem.target = self
+            menu.addItem(updateItem)
+            menu.addItem(.separator())
+        }
+
         // 設定
         let refresh = NSMenuItem(title: "Refresh", action: #selector(doRefresh), keyEquivalent: "")
         refresh.target = self
@@ -159,6 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let statusMenuItem = NSMenuItem(title: "Status", action: nil, keyEquivalent: "")
         let statusMenu = NSMenu(title: "Status")
         statusMenu.addItem(disabled: statusLabel)
+        statusMenu.addItem(disabled: "Version: \(appState.currentVersion)")
         statusMenu.addItem(disabled: "Unread: \(appState.notifications.count)")
         statusMenu.addItem(disabled: "Review requests: \(appState.unreviewedPRs.count)")
         statusMenu.addItem(disabled: "My PRs: \(appState.myPRs.count)")
@@ -195,6 +205,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func doRefresh()    { appState.fetchNow() }
     @objc private func toggleLogin()  { appState.launchManager.toggle() }
+    @objc private func openUpdate() {
+        guard let urlString = appState.availableUpdate?.htmlUrl,
+              let url = URL(string: urlString) else { return }
+        NSWorkspace.shared.open(url)
+    }
     @objc private func doQuit()       { NSApplication.shared.terminate(nil) }
     @objc private func copyError() {
         guard let d = appState.lastErrorDetail else { return }

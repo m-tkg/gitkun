@@ -47,6 +47,15 @@ actor GitHubNotificationService {
                               label: "authored PRs")
     }
 
+    func fetchLatestRelease() async throws -> ReleaseInfo {
+        try await fetch("/repos/\(Self.repoFullName)/releases/latest",
+                        as: ReleaseInfo.self,
+                        label: "latest release")
+    }
+
+    /// 更新チェック対象リポジトリ（自分自身）。
+    private static let repoFullName = "m-tkg/gitkun"
+
     // MARK: - フェッチ共通
 
     private func fetch<T: Decodable>(_ endpoint: String, as type: T.Type, label: String) async throws -> T {
