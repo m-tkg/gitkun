@@ -17,8 +17,6 @@ final class AppState: ObservableObject {
     @Published var lastChecked: Date? = nil
     @Published var isFetching: Bool = false
     @Published var lastErrorDetail: String? = nil
-    @Published var hasUnread: Bool = false
-    @Published var hasUnreviewed: Bool = false
     /// 自分より新しいリリースが見つかったとき非 nil。
     @Published var availableUpdate: ReleaseInfo? = nil
 
@@ -26,14 +24,19 @@ final class AppState: ObservableObject {
 
     let store = LocalStore.shared
     private let service = GitHubNotificationService()
-    private let poller: NotificationPoller
+    private var poller: Poller?
+    /// 更新チェック用ポーラー（約1時間ごと）。
+    private var updatePoller: Poller?
     let notifier = UserNotifier()
     let launchManager = LaunchAtLoginManager()
     private let selfUpdater: SelfUpdater
 
-    /// 更新チェック用タイマー（約1時間ごと）。
-    private var updateTimer: Timer?
-    private static let updateCheckInterval: TimeInterval = 3600
+    private static let updateCheckInterval = 3600
+
+    /// メニューに保持する通知・レビュー依頼の上限件数。
+    private static let displayLimit = 20
+    /// My PRs / Assigned Issues の保持上限件数。
+    private static let itemLimit = 50
 
     /// 実行中アプリのバージョン（`CFBundleShortVersionString`）。
     var currentVersion: String {
@@ -43,27 +46,25 @@ final class AppState: ObservableObject {
     // MARK: - 初期化
 
     init() {
-        self.poller = NotificationPoller(interval: LocalStore.shared.pollingInterval.rawValue)
         self.selfUpdater = SelfUpdater(service: service)
-        self.poller.delegate = self
     }
 
+    /// 通知ポーリングと更新チェックを開始する。どちらも開始時に即時 1 回発火する。
     func startPolling() {
-        poller.start()
-        startUpdateChecking()
+        let fetchPoller = Poller(interval: store.pollingInterval.rawValue) { [weak self] in
+            Task { @MainActor in await self?.performFetch() }
+        }
+        poller = fetchPoller
+        fetchPoller.start()
+
+        let updateChecker = Poller(interval: Self.updateCheckInterval) { [weak self] in
+            Task { @MainActor in await self?.checkForUpdate() }
+        }
+        updatePoller = updateChecker
+        updateChecker.start()
     }
 
     // MARK: - 更新チェック
-
-    /// 起動時に1回、以降は約1時間ごとに最新リリースを確認する。
-    private func startUpdateChecking() {
-        Task { await checkForUpdate() }
-        let timer = Timer.scheduledTimer(withTimeInterval: Self.updateCheckInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in await self?.checkForUpdate() }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        updateTimer = timer
-    }
 
     /// 最新リリースを取得し、自バージョンより新しければ `availableUpdate` を更新する。
     /// 新バージョンを初めて検知したときだけバナー + 音を出す（同一バージョンでは再通知しない）。
@@ -103,12 +104,10 @@ final class AppState: ObservableObject {
 
     func remove(notification: GitHubNotification) {
         notifications.removeAll { $0.id == notification.id }
-        hasUnread = !notifications.isEmpty
     }
 
     func remove(unreviewedPR: UnreviewedPR) {
         unreviewedPRs.removeAll { $0.id == unreviewedPR.id }
-        hasUnreviewed = !unreviewedPRs.isEmpty
     }
 
     func remove(assignedItem: AssignedItem) {
@@ -178,56 +177,31 @@ final class AppState: ObservableObject {
     // MARK: - 差分判定と通知
 
     private func handleFetchedNotifications(_ fetched: [GitHubNotification], isFirstFetch: Bool) {
-        let newOnes: [GitHubNotification]
+        let (newOnes, nextKnown) = FetchDiff.newItems(fetched: fetched, known: store.knownIDs)
+        store.knownIDs = nextKnown
 
-        switch store.diffStrategy {
-        case .id:
-            let fetchedIDs = Set(fetched.map(\.id))
-            let newIDs = fetchedIDs.subtracting(store.knownIDs)
-            newOnes = fetched.filter { newIDs.contains($0.id) }
-            store.knownIDs = fetchedIDs
-
-        case .updatedAt:
-            var known = store.knownUpdatedAts
-            newOnes = fetched.filter { known[$0.id] != $0.updatedAt }
-            fetched.forEach { known[$0.id] = $0.updatedAt }
-            store.knownUpdatedAts = known
-        }
-
-        notifications = Array(fetched.prefix(20))
-        hasUnread = !notifications.isEmpty
+        notifications = Array(fetched.prefix(Self.displayLimit))
 
         if isFirstFetch { return }
         notifyIfNew(newOnes, title: "GitHub Notifications")
     }
 
     private func handleFetchedUnreviewedPRs(_ fetched: [UnreviewedPR], isFirstFetch: Bool) {
-        let fetchedIDs = Set(fetched.map(\.id))
-        let newIDs = fetchedIDs.subtracting(store.knownUnreviewedIDs)
-        let newOnes = fetched.filter { newIDs.contains($0.id) }
-        store.knownUnreviewedIDs = fetchedIDs
+        let (newOnes, nextKnown) = FetchDiff.newItems(fetched: fetched, known: store.knownUnreviewedIDs)
+        store.knownUnreviewedIDs = nextKnown
 
-        unreviewedPRs = Array(fetched.prefix(20))
-        hasUnreviewed = !unreviewedPRs.isEmpty
+        unreviewedPRs = Array(fetched.prefix(Self.displayLimit))
 
         if isFirstFetch { return }
         notifyIfNew(newOnes, title: "GitHub Review Requests")
     }
 
     private func handleFetchedMyItems(assigned: [AssignedItem]?, authoredPRs: [AssignedItem]?) {
-        // PRs: assignee:@me と author:@me の PR を id で dedupe → updatedAt 降順 → 最大 50 件
-        var prsByID: [Int: AssignedItem] = [:]
-        for item in (assigned ?? []) where item.isPullRequest {
-            prsByID[item.id] = item
-        }
-        for item in (authoredPRs ?? []) where item.isPullRequest && prsByID[item.id] == nil {
-            prsByID[item.id] = item
-        }
-        myPRs = Array(prsByID.values.sorted { $0.updatedAt > $1.updatedAt }.prefix(50))
+        myPRs = FetchDiff.mergeMyPRs(assigned: assigned, authored: authoredPRs, limit: Self.itemLimit)
 
         // Issues: assigned 側のみ。assigned が失敗した場合は前回値を据え置き。
         if let assigned {
-            assignedIssues = Array(assigned.filter { !$0.isPullRequest }.prefix(50))
+            assignedIssues = Array(assigned.filter { !$0.isPullRequest }.prefix(Self.itemLimit))
         }
     }
 
@@ -262,16 +236,6 @@ private struct FetchErrors {
             details.append(error.errorDescription ?? "\(error)")
             labels.append(error.statusLabel)
             return nil
-        }
-    }
-}
-
-// MARK: - NotificationPollerDelegate
-
-extension AppState: NotificationPollerDelegate {
-    nonisolated func pollerDidFire() {
-        Task { @MainActor in
-            await self.performFetch()
         }
     }
 }

@@ -13,7 +13,7 @@
 		6D94CF0B6E3D4F2EA8D008F0 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70F2B4C6D444E0A08FA4F3 /* LocalStore.swift */; };
 		4CEF37AA247E478BB683D77C /* GitHubNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73915F00BB0C4AEE9345DDF5 /* GitHubNotificationService.swift */; };
 		0D737AE1346642A6930E0387 /* URLResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA02C1CA31454C828330582F /* URLResolver.swift */; };
-		F72503503A524D80AA54CFC0 /* NotificationPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = C78A71F98ED34CC0A582747D /* NotificationPoller.swift */; };
+		F72503503A524D80AA54CFC0 /* Poller.swift in Sources */ = {isa = PBXBuildFile; fileRef = C78A71F98ED34CC0A582747D /* Poller.swift */; };
 		2756E1AC36C1473BA66C7FD5 /* UserNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36BC4119AF26466D832EE4DA /* UserNotifier.swift */; };
 		9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */; };
 		59806207F04D46F5ABC13E08 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC372F9CD2104307A4D34592 /* AppState.swift */; };
@@ -23,6 +23,16 @@
 		5A77D80A2A954A14A3716057 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC8B5679344E4C9892C76324 /* UserNotifications.framework */; };
 		2D39B2F518094040BC886893 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F52D63A5C114391BE53F483 /* ServiceManagement.framework */; };
 		E8C759FA405F477CA739C3F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */; };
+		F1E5700000000000000000C1 /* VersionComparatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B1 /* VersionComparatorTests.swift */; };
+		F1E5700000000000000000C2 /* URLResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B2 /* URLResolverTests.swift */; };
+		F1E5700000000000000000C3 /* UnreviewedPRTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B3 /* UnreviewedPRTests.swift */; };
+		F1E5700000000000000000C4 /* RepositoryURLContainingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */; };
+		F1E5700000000000000000C5 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A003988D46499C91CAC414 /* Models.swift */; };
+		F1E5700000000000000000C6 /* URLResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA02C1CA31454C828330582F /* URLResolver.swift */; };
+		F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B6 /* FetchDiffTests.swift */; };
+		F1E5700000000000000000C7 /* FetchDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B7 /* FetchDiff.swift */; };
+		F1E5700000000000000000C8 /* FetchDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B7 /* FetchDiff.swift */; };
+		F1E5700000000000000000CA /* ProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B8 /* ProcessRunner.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,7 +42,7 @@
 		DD70F2B4C6D444E0A08FA4F3 /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		73915F00BB0C4AEE9345DDF5 /* GitHubNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubNotificationService.swift; sourceTree = "<group>"; };
 		DA02C1CA31454C828330582F /* URLResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResolver.swift; sourceTree = "<group>"; };
-		C78A71F98ED34CC0A582747D /* NotificationPoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPoller.swift; sourceTree = "<group>"; };
+		C78A71F98ED34CC0A582747D /* Poller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Poller.swift; sourceTree = "<group>"; };
 		36BC4119AF26466D832EE4DA /* UserNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserNotifier.swift; sourceTree = "<group>"; };
 		F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
 		CC372F9CD2104307A4D34592 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -43,6 +53,14 @@
 		3F52D63A5C114391BE53F483 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B068547A7AB544039AA1D70B /* gitkun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = gitkun.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1E5700000000000000000A1 /* gitkunTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = gitkunTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1E5700000000000000000B1 /* VersionComparatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionComparatorTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B2 /* URLResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResolverTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B3 /* UnreviewedPRTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnreviewedPRTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryURLContainingTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B6 /* FetchDiffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchDiffTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B7 /* FetchDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchDiff.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000B8 /* ProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessRunner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +73,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1E5700000000000000000A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -62,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				999F9BAF32B5424D9EFC53AE /* gitkun */,
+				F1E5700000000000000000A8 /* gitkunTests */,
 				7565C14675164AB0B4ED3119 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				B068547A7AB544039AA1D70B /* gitkun.app */,
+				F1E5700000000000000000A1 /* gitkunTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,17 +109,31 @@
 				E5A003988D46499C91CAC414 /* Models.swift */,
 				DD70F2B4C6D444E0A08FA4F3 /* LocalStore.swift */,
 				73915F00BB0C4AEE9345DDF5 /* GitHubNotificationService.swift */,
+				F1E5700000000000000000B8 /* ProcessRunner.swift */,
 				DA02C1CA31454C828330582F /* URLResolver.swift */,
-				C78A71F98ED34CC0A582747D /* NotificationPoller.swift */,
+				C78A71F98ED34CC0A582747D /* Poller.swift */,
 				36BC4119AF26466D832EE4DA /* UserNotifier.swift */,
 				F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */,
 				CC372F9CD2104307A4D34592 /* AppState.swift */,
+				F1E5700000000000000000B7 /* FetchDiff.swift */,
 				AF1FCB9480984C45B6BABC77 /* NotificationMenuItemView.swift */,
 				AAAA1111BBBB2222CCCC3333 /* SelfUpdater.swift */,
 				9C34FAE0C7CA42869ABDF0D5 /* Info.plist */,
 				73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */,
 			);
 			path = gitkun;
+			sourceTree = "<group>";
+		};
+		F1E5700000000000000000A8 /* gitkunTests */ = {
+			isa = PBXGroup;
+			children = (
+				F1E5700000000000000000B1 /* VersionComparatorTests.swift */,
+				F1E5700000000000000000B2 /* URLResolverTests.swift */,
+				F1E5700000000000000000B3 /* UnreviewedPRTests.swift */,
+				F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */,
+				F1E5700000000000000000B6 /* FetchDiffTests.swift */,
+			);
+			path = gitkunTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -114,6 +155,22 @@
 			productName = gitkun;
 			productReference = B068547A7AB544039AA1D70B /* gitkun.app */;
 			productType = "com.apple.product-type.application";
+		};
+		F1E5700000000000000000A2 /* gitkunTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1E5700000000000000000A3 /* Build configuration list for PBXNativeTarget "gitkunTests" */;
+			buildPhases = (
+				F1E5700000000000000000A6 /* Sources */,
+				F1E5700000000000000000A7 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = gitkunTests;
+			productName = gitkunTests;
+			productReference = F1E5700000000000000000A1 /* gitkunTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -139,6 +196,7 @@
 			projectRoot = "";
 			targets = (
 				D5CB5C7C1A104607821AFA15 /* gitkun */,
+				F1E5700000000000000000A2 /* gitkunTests */,
 			);
 		};
 /* End PBXProject section */
@@ -164,13 +222,30 @@
 				BF9A1CF3421B49EE9675123C /* Models.swift in Sources */,
 				6D94CF0B6E3D4F2EA8D008F0 /* LocalStore.swift in Sources */,
 				4CEF37AA247E478BB683D77C /* GitHubNotificationService.swift in Sources */,
+				F1E5700000000000000000CA /* ProcessRunner.swift in Sources */,
 				0D737AE1346642A6930E0387 /* URLResolver.swift in Sources */,
-				F72503503A524D80AA54CFC0 /* NotificationPoller.swift in Sources */,
+				F72503503A524D80AA54CFC0 /* Poller.swift in Sources */,
 				2756E1AC36C1473BA66C7FD5 /* UserNotifier.swift in Sources */,
 				9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */,
 				59806207F04D46F5ABC13E08 /* AppState.swift in Sources */,
+				F1E5700000000000000000C7 /* FetchDiff.swift in Sources */,
 				157ED7DB719B4D1689127BFE /* NotificationMenuItemView.swift in Sources */,
 				AAAA1111BBBB2222CCCC3334 /* SelfUpdater.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1E5700000000000000000A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1E5700000000000000000C1 /* VersionComparatorTests.swift in Sources */,
+				F1E5700000000000000000C2 /* URLResolverTests.swift in Sources */,
+				F1E5700000000000000000C3 /* UnreviewedPRTests.swift in Sources */,
+				F1E5700000000000000000C4 /* RepositoryURLContainingTests.swift in Sources */,
+				F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */,
+				F1E5700000000000000000C5 /* Models.swift in Sources */,
+				F1E5700000000000000000C6 /* URLResolver.swift in Sources */,
+				F1E5700000000000000000C8 /* FetchDiff.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -309,7 +384,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkun";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -332,10 +407,40 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkun";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		F1E5700000000000000000A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkunTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F1E5700000000000000000A5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkunTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -357,6 +462,15 @@
 			buildConfigurations = (
 				20CB2932F94A4298BD130779 /* Debug */,
 				80B92ED7DBA5444AB078AD73 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1E5700000000000000000A3 /* Build configuration list for PBXNativeTarget "gitkunTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1E5700000000000000000A4 /* Debug */,
+				F1E5700000000000000000A5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
