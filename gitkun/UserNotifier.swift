@@ -37,8 +37,8 @@ final class UserNotifier: NSObject {
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
 
-    func playSound() {
-        NSSound(named: "Glass")?.play()
+    func playSound(named name: String) {
+        NSSound(named: name)?.play()
     }
 }
 
