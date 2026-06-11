@@ -347,7 +347,7 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
-| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音・Launch at login。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
+| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
 | `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem`, `ReleaseInfo`, `VersionComparator` 等） |
 
 ---
