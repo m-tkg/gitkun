@@ -32,6 +32,22 @@ make clean   # ビルド成果物削除
 2. `gitkun.app` を `/Applications` へコピー
 3. 初回起動時に通知の許可ダイアログが表示されたら「許可」を選択
 
+## リリース手順
+
+リリースは GitHub Actions（`.github/workflows/release.yml`）が **`v*` タグの push をトリガー**に、Release ビルド → `gitkun.app` を zip 化 → GitHub Releases へバイナリ添付まで自動で行う。
+
+1. バージョンを上げる場合は `gitkun.xcodeproj/project.pbxproj` の `MARKETING_VERSION` を更新して main に commit & push
+2. タグを打って push するだけ
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+数十秒後、`gitkun.zip` が添付された Release が公開される。
+
+> **注意:** 手動で `gh release create` を実行しないこと。タグ push でワークフローが同名タグの Release を作成するため、先に手動でリリースを作ると CI 側が「release with the same tag name already exists」で失敗し、バイナリが添付されない。
+
 ## 使い方
 
 起動するとメニューバーにアイコンが表示される。
