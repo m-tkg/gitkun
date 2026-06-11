@@ -86,7 +86,7 @@ final class AppState: ObservableObject {
                           body: "\(release.tagName) is available (current \(currentVersion))",
                           url: url)
             if store.soundEnabled {
-                notifier.playSound()
+                notifier.playSound(named: store.unreadSoundName)
             }
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
@@ -183,7 +183,7 @@ final class AppState: ObservableObject {
         notifications = Array(fetched.prefix(Self.displayLimit))
 
         if isFirstFetch { return }
-        notifyIfNew(newOnes, title: "GitHub Notifications")
+        notifyIfNew(newOnes, title: "GitHub Notifications", soundName: store.unreadSoundName)
     }
 
     private func handleFetchedUnreviewedPRs(_ fetched: [UnreviewedPR], isFirstFetch: Bool) {
@@ -193,7 +193,7 @@ final class AppState: ObservableObject {
         unreviewedPRs = Array(fetched.prefix(Self.displayLimit))
 
         if isFirstFetch { return }
-        notifyIfNew(newOnes, title: "GitHub Review Requests")
+        notifyIfNew(newOnes, title: "GitHub Review Requests", soundName: store.reviewSoundName)
     }
 
     private func handleFetchedMyItems(assigned: [AssignedItem]?, authoredPRs: [AssignedItem]?) {
@@ -206,13 +206,13 @@ final class AppState: ObservableObject {
     }
 
     /// 新規が 1 件以上あれば通知バナー + 音を出す。
-    private func notifyIfNew<T: MenuRowDisplayable>(_ newOnes: [T], title: String) {
+    private func notifyIfNew<T: MenuRowDisplayable>(_ newOnes: [T], title: String, soundName: String) {
         guard let first = newOnes.first else { return }
         let extra = newOnes.count - 1
         let body = extra > 0 ? "\(first.displayTitle) (+\(extra) more)" : first.displayTitle
         notifier.send(title: title, body: body, url: first.webURL)
         if store.soundEnabled {
-            notifier.playSound()
+            notifier.playSound(named: soundName)
         }
     }
 }

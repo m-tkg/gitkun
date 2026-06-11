@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import OSLog
+import SwiftUI
 
 private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "AppDelegate")
 
@@ -10,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     let appState = AppState()
     private var cancellable: AnyCancellable?
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -100,10 +102,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refresh.isEnabled = !appState.isFetching
         menu.addItem(refresh)
 
-        let loginTitle = appState.launchManager.isEnabled ? "Launch at login: ON" : "Launch at login: OFF"
-        let login = NSMenuItem(title: loginTitle, action: #selector(toggleLogin), keyEquivalent: "")
-        login.target = self
-        menu.addItem(login)
+        let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
         menu.addItem(.separator())
 
         let quit = NSMenuItem(title: "Quit", action: #selector(doQuit), keyEquivalent: "q")
@@ -206,7 +207,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - アクション
 
     @objc private func doRefresh()    { appState.fetchNow() }
-    @objc private func toggleLogin()  { appState.launchManager.toggle() }
+
+    /// 設定ウィンドウを開く。
+    /// SwiftUI の Settings シーンは macOS 14+ でセレクタ経由の表示がブロックされたため、
+    /// 自前の NSWindow + NSHostingController で表示する。
+    @objc private func openSettings() {
+        if settingsWindow == nil {
+            let view = SettingsView(launchManager: appState.launchManager)
+            let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+            window.title = "gitkun Settings"
+            window.styleMask = [.titled, .closable]
+            // 閉じてもインスタンスを保持し、再度開けるようにする
+            window.isReleasedWhenClosed = false
+            window.center()
+            settingsWindow = window
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow?.makeKeyAndOrderFront(nil)
+    }
     @objc private func installUpdate() {
         guard let update = appState.availableUpdate else { return }
 
