@@ -12,6 +12,7 @@ final class LocalStore {
         static let unreadSoundName = "unreadSoundName"
         static let reviewSoundName = "reviewSoundName"
         static let updateSoundName = "updateSoundName"
+        static let excludeWIP = "excludeWIP"
         static let lastNotifiedReleaseTag = "lastNotifiedReleaseTag"
     }
 
@@ -64,6 +65,16 @@ final class LocalStore {
     var updateSoundName: String {
         get { defaults.string(forKey: Keys.updateSoundName) ?? "Glass" }
         set { defaults.set(newValue, forKey: Keys.updateSoundName) }
+    }
+
+    /// draft / WIP の PR を Review Requests から除外するか。SettingsView の @AppStorage と同じキー。
+    var excludeWIP: Bool {
+        get {
+            defaults.object(forKey: Keys.excludeWIP) == nil
+                ? true
+                : defaults.bool(forKey: Keys.excludeWIP)
+        }
+        set { defaults.set(newValue, forKey: Keys.excludeWIP) }
     }
 
     /// 最後にバナー通知した最新リリースのタグ。同一バージョンの再通知を抑止する。
