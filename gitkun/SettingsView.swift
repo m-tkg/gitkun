@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("unreadSoundName") private var unreadSoundName = "Glass"
     @AppStorage("reviewSoundName") private var reviewSoundName = "Glass"
     @AppStorage("updateSoundName") private var updateSoundName = "Glass"
+    @AppStorage("excludeWIP") private var excludeWIP = true
 
     private let soundNames = SystemSounds.availableNames()
 
@@ -32,6 +33,8 @@ struct SettingsView: View {
             .onChange(of: updateSoundName) { NSSound(named: $0)?.play() }
 
             Divider()
+
+            Toggle("Exclude draft / WIP PRs from review requests", isOn: $excludeWIP)
 
             Toggle("Launch at login", isOn: Binding(
                 get: { launchManager.isEnabled },
