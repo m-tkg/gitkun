@@ -330,7 +330,8 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 macOS 14+ でセレクタ経由の表示がブロックされたため使わない）。
 未読通知用とレビュー依頼用で別の音を設定でき、選択肢は `/System/Library/Sounds` から実行時に列挙、
 選択時にプレビュー再生する。`@AppStorage` と `LocalStore` は同じ UserDefaults キーを共有する。
-その他の設定（ポーリング間隔・音の ON/OFF）は UI 未実装で `LocalStore` 経由で変更可能。
+音全体の ON/OFF（`soundEnabled`）も設定ウィンドウの Toggle で変更でき、OFF のとき音の
+Picker は無効化される。ポーリング間隔のみ UI 未実装で `LocalStore` 経由で変更可能。
 旧キー `diffStrategy` / `knownNotificationUpdatedAts` は廃止済みで、起動時に削除される。
 
 ---
@@ -352,7 +353,7 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
-| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
+| `SettingsView.swift` | 設定の SwiftUI ビュー（音の有効/無効・通知音・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
 | `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem`, `ReleaseInfo`, `VersionComparator` 等） |
 
 ---
