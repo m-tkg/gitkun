@@ -73,6 +73,10 @@ make clean
 - タイトルが `[WIP]` で始まる（大文字小文字は区別しない）
 - `wip` ラベルが付いている（大文字小文字は区別しない）
 
+このフィルタは設定（`excludeWIP`、デフォルト ON）で OFF にできる。適用は `AppState` 側で行い、
+`GitHubNotificationService` はフィルタしない生の検索結果を返す。OFF→ON/ON→OFF の切り替えは
+次のポーリングまたは Refresh で反映される（OFF にすると WIP の PR が新規として通知され得る）。
+
 ---
 
 ## GitHub データ取得
@@ -316,6 +320,7 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 | `unreadSoundName` | String | `"Glass"` |
 | `reviewSoundName` | String | `"Glass"` |
 | `updateSoundName` | String | `"Glass"` |
+| `excludeWIP` | Bool | `true` |
 | `knownNotificationIDs` | [String] | `[]` |
 | `knownUnreviewedPRIDs` | [Int] | `[]` |
 | `lastNotifiedReleaseTag` | String? | `nil` |
@@ -347,7 +352,7 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
-| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
+| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
 | `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem`, `ReleaseInfo`, `VersionComparator` 等） |
 
 ---
