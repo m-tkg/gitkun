@@ -194,6 +194,8 @@ final class AppState: ObservableObject {
     }
 
     private func handleFetchedUnreviewedPRs(_ fetched: [UnreviewedPR], isFirstFetch: Bool) {
+        // draft / タイトル先頭 [WIP] / wip ラベルの除外（設定で ON/OFF、デフォルト ON）
+        let fetched = store.excludeWIP ? fetched.filter(\.isReviewWaiting) : fetched
         let (newOnes, nextKnown) = FetchDiff.newItems(fetched: fetched, known: store.knownUnreviewedIDs)
         store.knownUnreviewedIDs = nextKnown
 
