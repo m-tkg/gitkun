@@ -8,6 +8,7 @@ struct SettingsView: View {
     @ObservedObject var appState: AppState
     @ObservedObject var launchManager: LaunchAtLoginManager
 
+    @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("unreadSoundName") private var unreadSoundName = "Glass"
     @AppStorage("reviewSoundName") private var reviewSoundName = "Glass"
     @AppStorage("updateSoundName") private var updateSoundName = "Glass"
@@ -17,20 +18,25 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Picker("Unread notification sound:", selection: $unreadSoundName) {
-                ForEach(soundNames, id: \.self) { Text($0) }
-            }
-            .onChange(of: unreadSoundName) { NSSound(named: $0)?.play() }
+            Toggle("Play notification sounds", isOn: $soundEnabled)
 
-            Picker("Review request sound:", selection: $reviewSoundName) {
-                ForEach(soundNames, id: \.self) { Text($0) }
-            }
-            .onChange(of: reviewSoundName) { NSSound(named: $0)?.play() }
+            Group {
+                Picker("Unread notification sound:", selection: $unreadSoundName) {
+                    ForEach(soundNames, id: \.self) { Text($0) }
+                }
+                .onChange(of: unreadSoundName) { NSSound(named: $0)?.play() }
 
-            Picker("Update available sound:", selection: $updateSoundName) {
-                ForEach(soundNames, id: \.self) { Text($0) }
+                Picker("Review request sound:", selection: $reviewSoundName) {
+                    ForEach(soundNames, id: \.self) { Text($0) }
+                }
+                .onChange(of: reviewSoundName) { NSSound(named: $0)?.play() }
+
+                Picker("Update available sound:", selection: $updateSoundName) {
+                    ForEach(soundNames, id: \.self) { Text($0) }
+                }
+                .onChange(of: updateSoundName) { NSSound(named: $0)?.play() }
             }
-            .onChange(of: updateSoundName) { NSSound(named: $0)?.play() }
+            .disabled(!soundEnabled)
 
             Divider()
 
