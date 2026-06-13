@@ -88,9 +88,7 @@ final class AppState: ObservableObject {
             notifier.send(title: "gitkun Update Available",
                           body: "\(release.tagName) is available (current \(currentVersion))",
                           url: url)
-            if store.soundEnabled {
-                notifier.playSound(named: store.updateSoundName)
-            }
+            notifier.playSound(named: store.updateSoundName)
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -220,9 +218,7 @@ final class AppState: ObservableObject {
         let extra = newOnes.count - 1
         let body = extra > 0 ? "\(first.displayTitle) (+\(extra) more)" : first.displayTitle
         notifier.send(title: title, body: body, url: first.webURL)
-        if store.soundEnabled {
-            notifier.playSound(named: soundName)
-        }
+        notifier.playSound(named: soundName)
     }
 }
 
