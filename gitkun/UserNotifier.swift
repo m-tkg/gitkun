@@ -37,7 +37,9 @@ final class UserNotifier: NSObject {
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
 
+    /// 指定された音を鳴らす。`SystemSounds.noSound`（N/A）のときは鳴らさない。
     func playSound(named name: String) {
+        guard name != SystemSounds.noSound else { return }
         NSSound(named: name)?.play()
     }
 }
