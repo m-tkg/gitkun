@@ -8,35 +8,30 @@ struct SettingsView: View {
     @ObservedObject var appState: AppState
     @ObservedObject var launchManager: LaunchAtLoginManager
 
-    @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("unreadSoundName") private var unreadSoundName = "Glass"
     @AppStorage("reviewSoundName") private var reviewSoundName = "Glass"
     @AppStorage("updateSoundName") private var updateSoundName = "Glass"
     @AppStorage("excludeWIP") private var excludeWIP = true
 
-    private let soundNames = SystemSounds.availableNames()
+    /// 先頭に「鳴らさない」を表す N/A を置く
+    private let soundNames = [SystemSounds.noSound] + SystemSounds.availableNames()
 
     var body: some View {
         Form {
-            Toggle("Play notification sounds", isOn: $soundEnabled)
-
-            Group {
-                Picker("Unread notification sound:", selection: $unreadSoundName) {
-                    ForEach(soundNames, id: \.self) { Text($0) }
-                }
-                .onChange(of: unreadSoundName) { NSSound(named: $0)?.play() }
-
-                Picker("Review request sound:", selection: $reviewSoundName) {
-                    ForEach(soundNames, id: \.self) { Text($0) }
-                }
-                .onChange(of: reviewSoundName) { NSSound(named: $0)?.play() }
-
-                Picker("Update available sound:", selection: $updateSoundName) {
-                    ForEach(soundNames, id: \.self) { Text($0) }
-                }
-                .onChange(of: updateSoundName) { NSSound(named: $0)?.play() }
+            Picker("Unread notification sound:", selection: $unreadSoundName) {
+                ForEach(soundNames, id: \.self) { Text($0) }
             }
-            .disabled(!soundEnabled)
+            .onChange(of: unreadSoundName) { NSSound(named: $0)?.play() }
+
+            Picker("Review request sound:", selection: $reviewSoundName) {
+                ForEach(soundNames, id: \.self) { Text($0) }
+            }
+            .onChange(of: reviewSoundName) { NSSound(named: $0)?.play() }
+
+            Picker("Update available sound:", selection: $updateSoundName) {
+                ForEach(soundNames, id: \.self) { Text($0) }
+            }
+            .onChange(of: updateSoundName) { NSSound(named: $0)?.play() }
 
             Divider()
 
@@ -64,6 +59,10 @@ struct SettingsView: View {
 
 /// macOS のシステムサウンド名を列挙する。
 enum SystemSounds {
+
+    /// 「音を鳴らさない」を表す選択肢。実在するサウンド名ではない。
+    static let noSound = "N/A"
+
     static func availableNames() -> [String] {
         let dir = "/System/Library/Sounds"
         let files = (try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? []
