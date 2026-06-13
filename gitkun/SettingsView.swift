@@ -17,7 +17,7 @@ struct SettingsView: View {
     private let soundNames = [SystemSounds.noSound] + SystemSounds.availableNames()
 
     var body: some View {
-        Form {
+        VStack(alignment: .leading, spacing: 12) {
             Picker("Unread notification sound:", selection: $unreadSoundName) {
                 ForEach(soundNames, id: \.self) { Text($0) }
             }
@@ -52,8 +52,9 @@ struct SettingsView: View {
             Text("Latest release: \(appState.latestReleaseTag ?? "—")")
                 .foregroundColor(.secondary)
         }
+        .toggleStyle(.checkbox)
+        .frame(width: 360, alignment: .leading)
         .padding(20)
-        .frame(width: 360)
     }
 }
 
