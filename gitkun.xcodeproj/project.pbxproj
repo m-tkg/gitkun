@@ -30,8 +30,12 @@
 		F1E5700000000000000000C5 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A003988D46499C91CAC414 /* Models.swift */; };
 		F1E5700000000000000000C6 /* URLResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA02C1CA31454C828330582F /* URLResolver.swift */; };
 		F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B6 /* FetchDiffTests.swift */; };
+		F1E5700000000000000000D1 /* GitHubTabMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000BA /* GitHubTabMatcherTests.swift */; };
 		F1E5700000000000000000C7 /* FetchDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B7 /* FetchDiff.swift */; };
 		F1E5700000000000000000C8 /* FetchDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B7 /* FetchDiff.swift */; };
+		F1E5700000000000000000D2 /* GitHubTabMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000BB /* GitHubTabMatcher.swift */; };
+		F1E5700000000000000000D3 /* GitHubTabMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000BB /* GitHubTabMatcher.swift */; };
+		F1E5700000000000000000D4 /* BrowserTabOpener.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000BC /* BrowserTabOpener.swift */; };
 		F1E5700000000000000000CA /* ProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B8 /* ProcessRunner.swift */; };
 		F1E5700000000000000000CB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B9 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
@@ -60,7 +64,10 @@
 		F1E5700000000000000000B3 /* UnreviewedPRTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnreviewedPRTests.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryURLContainingTests.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B6 /* FetchDiffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchDiffTests.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000BA /* GitHubTabMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubTabMatcherTests.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B7 /* FetchDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchDiff.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000BB /* GitHubTabMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubTabMatcher.swift; sourceTree = "<group>"; };
+		F1E5700000000000000000BC /* BrowserTabOpener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabOpener.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B8 /* ProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessRunner.swift; sourceTree = "<group>"; };
 		F1E5700000000000000000B9 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -118,6 +125,8 @@
 				F5702F1F26E34A399BE2797B /* LaunchAtLoginManager.swift */,
 				CC372F9CD2104307A4D34592 /* AppState.swift */,
 				F1E5700000000000000000B7 /* FetchDiff.swift */,
+				F1E5700000000000000000BB /* GitHubTabMatcher.swift */,
+				F1E5700000000000000000BC /* BrowserTabOpener.swift */,
 				AF1FCB9480984C45B6BABC77 /* NotificationMenuItemView.swift */,
 				F1E5700000000000000000B9 /* SettingsView.swift */,
 				AAAA1111BBBB2222CCCC3333 /* SelfUpdater.swift */,
@@ -135,6 +144,7 @@
 				F1E5700000000000000000B3 /* UnreviewedPRTests.swift */,
 				F1E5700000000000000000B4 /* RepositoryURLContainingTests.swift */,
 				F1E5700000000000000000B6 /* FetchDiffTests.swift */,
+				F1E5700000000000000000BA /* GitHubTabMatcherTests.swift */,
 			);
 			path = gitkunTests;
 			sourceTree = "<group>";
@@ -232,6 +242,8 @@
 				9F9487C5A32846C5B73735D7 /* LaunchAtLoginManager.swift in Sources */,
 				59806207F04D46F5ABC13E08 /* AppState.swift in Sources */,
 				F1E5700000000000000000C7 /* FetchDiff.swift in Sources */,
+				F1E5700000000000000000D2 /* GitHubTabMatcher.swift in Sources */,
+				F1E5700000000000000000D4 /* BrowserTabOpener.swift in Sources */,
 				157ED7DB719B4D1689127BFE /* NotificationMenuItemView.swift in Sources */,
 				F1E5700000000000000000CB /* SettingsView.swift in Sources */,
 				AAAA1111BBBB2222CCCC3334 /* SelfUpdater.swift in Sources */,
@@ -247,9 +259,11 @@
 				F1E5700000000000000000C3 /* UnreviewedPRTests.swift in Sources */,
 				F1E5700000000000000000C4 /* RepositoryURLContainingTests.swift in Sources */,
 				F1E5700000000000000000C9 /* FetchDiffTests.swift in Sources */,
+				F1E5700000000000000000D1 /* GitHubTabMatcherTests.swift in Sources */,
 				F1E5700000000000000000C5 /* Models.swift in Sources */,
 				F1E5700000000000000000C6 /* URLResolver.swift in Sources */,
 				F1E5700000000000000000C8 /* FetchDiff.swift in Sources */,
+				F1E5700000000000000000D3 /* GitHubTabMatcher.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
