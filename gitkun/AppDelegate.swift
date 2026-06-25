@@ -54,31 +54,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         menu.addItem(.separator())
 
-        // レビュー依頼
+        // レビュー依頼。クリックしても一覧から削除しない（次ポーリングで再取得）。
         addSubmenu(into: menu,
                    title: "Review Requests",
                    items: appState.unreviewedPRs,
                    emptyTitle: "No review requests",
-                   dotColor: .systemOrange) { [weak self] pr in
-            self?.appState.remove(unreviewedPR: pr)
-        }
+                   dotColor: .systemOrange)
 
-        // My PRs（assignee:@me と author:@me のマージ）
-        // クリックしても一覧から削除しない（次ポーリングで上書きされる一覧のため）。
+        // My PRs（assignee:@me と author:@me のマージ）。クリックしても削除しない。
         addSubmenu(into: menu,
                    title: "My PRs",
                    items: appState.myPRs,
                    emptyTitle: "No PRs",
-                   dotColor: .systemBlue) { _ in }
+                   dotColor: .systemBlue)
 
-        // Assigned Issues
+        // Assigned Issues。クリックしても削除しない。
         addSubmenu(into: menu,
                    title: "Assigned Issues",
                    items: appState.assignedIssues,
                    emptyTitle: "No assigned issues",
-                   dotColor: .systemPurple) { [weak self] item in
-            self?.appState.remove(assignedItem: item)
-        }
+                   dotColor: .systemPurple)
         menu.addItem(.separator())
 
         // Status サブメニュー
@@ -112,13 +107,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// 共通: 親メニュー + サブメニュー（行は `NotificationMenuItemView`）を構築。
-    /// `onRemove` 後に項目の `webURL` をブラウザで開く。
+    /// 行クリック時は項目の `webURL` をブラウザで開いてから `onClick` を呼ぶ。
+    /// クリックで一覧から項目を削除はしない（次ポーリングで再取得される）。
     private func addSubmenu<T: MenuRowDisplayable>(into menu: NSMenu,
                                                    title: String,
                                                    items: [T],
                                                    emptyTitle: String,
                                                    dotColor: NSColor,
-                                                   onRemove: @escaping (T) -> Void) {
+                                                   onClick: @escaping (T) -> Void = { _ in }) {
         let parent = NSMenuItem(title: "\(title) (\(items.count))", action: nil, keyEquivalent: "")
         let submenu = NSMenu(title: title)
 
@@ -133,8 +129,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     updatedAt: item.updatedAtString,
                     dotColor: dotColor
                 ) {
-                    onRemove(item)
                     BrowserTabOpener.open(item.webURL)
+                    onClick(item)
                 }
                 submenu.addItem(menuItem)
             }
@@ -156,12 +152,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         for key in orderedKeys {
             guard let items = grouped[key], !items.isEmpty else { continue }
             let label = NotificationReason(rawValue: key)?.displayLabel ?? key
+            // 通知はクリックでブラウザを開いた後に refresh する。
+            // GitHub 側で既読になった通知が次フェッチで一覧から消える。
             addSubmenu(into: menu,
                        title: label,
                        items: items,
                        emptyTitle: "",
-                       dotColor: .systemGreen) { [weak self] notif in
-                self?.appState.remove(notification: notif)
+                       dotColor: .systemGreen) { [weak self] _ in
+                self?.appState.fetchNow()
             }
         }
     }

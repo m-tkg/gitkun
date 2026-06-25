@@ -144,7 +144,12 @@ enum BrowserTabOpener {
     // MARK: - AppleScript
 
     /// 各タブを `windowIndex \t tabIndex \t URL` の text にして list で返す。
-    /// 壊れたタブ（URL 取得不可）は try で握りつぶしてスキップする。
+    ///
+    /// 速度のため URL はウィンドウ単位で一括取得する（`URL of tabs of w`）。タブごとに
+    /// `URL of t` を取ると Apple Event 往復がタブ数に比例し、タブが多いと数秒かかるため。
+    /// 一括取得ならウィンドウ数ぶんの往復で済む。取得済みリストの反復は往復を伴わない。
+    /// `tabIndex` はリスト位置（1-based）から導出する。URL 取得不可なタブは値が
+    /// `missing value` 等になるが、`u as text` で文字列化 → パース時に弾かれてスキップされる。
     ///
     /// 注意: 区切りの `tab`（タブ文字）は `tell application` ブロックの外で評価する。ブロック内では
     /// ブラウザの用語（`tab` 要素）に解釈されて文字列 "tab" になり、パースが壊れるため。
@@ -156,13 +161,16 @@ enum BrowserTabOpener {
             set wi to 0
             repeat with w in windows
                 set wi to wi + 1
-                set ti to 0
-                repeat with t in tabs of w
-                    set ti to ti + 1
-                    try
-                        set end of out to (wi as text) & sep & (ti as text) & sep & (URL of t)
-                    end try
-                end repeat
+                try
+                    set tabURLs to URL of tabs of w
+                    set ti to 0
+                    repeat with u in tabURLs
+                        set ti to ti + 1
+                        try
+                            set end of out to (wi as text) & sep & (ti as text) & sep & (u as text)
+                        end try
+                    end repeat
+                end try
             end repeat
             return out
         end tell
