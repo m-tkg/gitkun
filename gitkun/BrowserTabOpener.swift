@@ -22,12 +22,15 @@ enum BrowserTabOpener {
         /// 既定ブラウザ判定で得た bundle id → 対応ブラウザ。未対応は nil。
         /// Chromium 系（Edge / Brave / Vivaldi / Opera）は Chrome と同じ AppleScript 辞書を持つ。
         private static let known: [Browser] = [
-            Browser(bundleID: "com.apple.Safari",        appName: "Safari",         engine: .safari),
-            Browser(bundleID: "com.google.Chrome",       appName: "Google Chrome",  engine: .chromium),
-            Browser(bundleID: "com.microsoft.edgemac",   appName: "Microsoft Edge", engine: .chromium),
-            Browser(bundleID: "com.brave.Browser",       appName: "Brave Browser",  engine: .chromium),
-            Browser(bundleID: "com.vivaldi.Vivaldi",     appName: "Vivaldi",        engine: .chromium),
-            Browser(bundleID: "com.operasoftware.Opera", appName: "Opera",          engine: .chromium),
+            Browser(bundleID: "com.apple.Safari",          appName: "Safari",                engine: .safari),
+            Browser(bundleID: "com.google.Chrome",         appName: "Google Chrome",         engine: .chromium),
+            Browser(bundleID: "com.google.Chrome.beta",    appName: "Google Chrome Beta",    engine: .chromium),
+            Browser(bundleID: "com.google.Chrome.dev",     appName: "Google Chrome Dev",     engine: .chromium),
+            Browser(bundleID: "com.google.Chrome.canary",  appName: "Google Chrome Canary",  engine: .chromium),
+            Browser(bundleID: "com.microsoft.edgemac",     appName: "Microsoft Edge",        engine: .chromium),
+            Browser(bundleID: "com.brave.Browser",         appName: "Brave Browser",         engine: .chromium),
+            Browser(bundleID: "com.vivaldi.Vivaldi",       appName: "Vivaldi",               engine: .chromium),
+            Browser(bundleID: "com.operasoftware.Opera",   appName: "Opera",                 engine: .chromium),
         ]
 
         init(bundleID: String, appName: String, engine: Engine) {
@@ -60,9 +63,23 @@ enum BrowserTabOpener {
     }
 
     private static func openOnMain(_ url: URL) {
-        guard let browser = defaultBrowser(), isRunning(browser),
-              let tab = findMatchingTab(for: url, in: browser),
-              activate(tab, in: browser) else {
+        guard let browser = defaultBrowser() else {
+            logger.debug("Default browser is not a supported browser; opening normally")
+            NSWorkspace.shared.open(url)
+            return
+        }
+        guard isRunning(browser) else {
+            logger.debug("\(browser.appName, privacy: .public) is not running; opening normally")
+            NSWorkspace.shared.open(url)
+            return
+        }
+        guard let tab = findMatchingTab(for: url, in: browser) else {
+            logger.debug("No existing tab matched \(url.absoluteString, privacy: .public); opening new tab")
+            NSWorkspace.shared.open(url)
+            return
+        }
+        guard activate(tab, in: browser) else {
+            logger.error("Found matching tab but failed to activate it; opening new tab")
             NSWorkspace.shared.open(url)
             return
         }
@@ -77,7 +94,9 @@ enum BrowserTabOpener {
               let bundleID = Bundle(url: appURL)?.bundleIdentifier else {
             return nil
         }
-        return Browser(bundleID: bundleID)
+        if let browser = Browser(bundleID: bundleID) { return browser }
+        logger.debug("Default browser bundle id is not supported: \(bundleID, privacy: .public)")
+        return nil
     }
 
     private static func isRunning(_ browser: Browser) -> Bool {
