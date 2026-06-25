@@ -97,8 +97,13 @@ jobs:
           SIGN_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
         run: |
           APP=.build/Build/Products/Release/gitkun.app
-          codesign --force --deep --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
+          # --entitlements を渡さないと apple-events entitlement が剥がれるため必ず指定する。
+          codesign --force --deep --options runtime --timestamp \
+            --entitlements gitkun/gitkun.entitlements \
+            --sign "$SIGN_IDENTITY" "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -d --entitlements - --xml "$APP" | grep -q "com.apple.security.automation.apple-events" \
+            && echo "apple-events entitlement: OK"
 
       # Developer ID 署名済みアプリを公証し、チケットを .app に staple する。
       - name: Notarize and staple
