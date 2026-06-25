@@ -49,6 +49,52 @@ make test
 make clean
 ```
 
+`make release` はローカル向けの **ad-hoc 署名**ビルド。配布用の署名・公証は CI が行う（後述）。
+
+---
+
+## ブランチ運用（必須）
+
+- **`main` ブランチへ直接コミット / push しない。** 変更は必ず Pull Request 経由で行う。
+- 作業ブランチは**必ずその時点の最新の `main` から切る**
+  （`git fetch origin && git switch main && git pull --ff-only` してから分岐）。
+- PR は `gh pr create` で作成し、マージはレビュー後に行う（GitHub 操作は `gh` を使う）。
+- **PR 作成後に追加修正するときは、まずその PR がマージ済みでないか確認する**
+  （`gh pr view <番号> --json state,mergedAt`）。マージ済みのブランチへ push しても `main` には
+  反映されない（孤立コミットになる）。マージ済みなら**最新 `main` から新ブランチを切り直し**、
+  必要なら `MARKETING_VERSION` を上げて別 PR を出す。
+- リリース用 Actions は `push: branches: [main]` で発火するため、**main への push がそのまま
+  リリースに直結する**。事故防止の意味でも main 直 push は避け、PR マージ経由にする。
+
+---
+
+## リリース・署名・配布
+
+リリースは GitHub Actions（`.github/workflows/release.yml`）が担当する。
+
+- `main` に push されると、`gitkun.xcodeproj/project.pbxproj` の `MARKETING_VERSION` を読み取り、
+  `v<version>` タグのリリースを自動作成する（同名リリースが既にあればスキップ）。
+  → **リリースは `MARKETING_VERSION` を上げて `main` にマージするだけ**。
+- ビルド成果物（`gitkun.app` を zip 化）をリリースアセットとして添付。自己更新はこの zip を取得する。
+
+### 署名・公証（Developer ID + notarization）
+
+- 配布版は **Developer ID Application 証明書**（Team ID `G72M73C546`）で署名し、**公証（notarization）+ staple** する。
+  `make release` の ad-hoc 署名を CI が `codesign --options runtime --timestamp --entitlements gitkun/gitkun.entitlements`
+  で上書き署名し直す（`--entitlements` を渡さないと apple-events entitlement が剥がれるため必須）。
+- **安定署名でなければアップデート越しに自動化(TCC)権限が保持されない**。ad-hoc はビルドごとに署名が
+  変わり、更新のたびにブラウザ制御の許可を取り直す羽目になる。公証すれば Gatekeeper 警告も消え、他人にも配布可能。
+- 署名・公証情報は GitHub の **Secrets 6 つ**で CI に渡す。**Secrets 未設定時は ad-hoc 署名（公証スキップ）に
+  フォールバック**する。
+
+  | 用途 | Secret |
+  |---|---|
+  | 署名 | `SIGNING_IDENTITY` / `SIGNING_CERTIFICATE_PASSWORD` / `SIGNING_CERTIFICATE_P12_BASE64` |
+  | 公証 | `NOTARY_APPLE_ID` / `NOTARY_PASSWORD` / `NOTARY_TEAM_ID` |
+
+  snapperkun / whisperkun 等と同じ Apple Developer アカウントなら、それらに登録済みの 6 値をそのまま流用できる
+  （証明書の新規発行は不要）。登録手順・移行時の権限再許可の詳細は **`docs/SIGNING.md`** を参照。
+
 ---
 
 ## 機能要件
