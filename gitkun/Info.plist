@@ -18,5 +18,7 @@
     <string>APPL</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>開こうとしている GitHub のページが既に開かれている場合に、そのタブへ移動するため Safari / Chrome 系ブラウザを制御します。</string>
 </dict>
 </plist>

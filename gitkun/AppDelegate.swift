@@ -64,13 +64,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // My PRs（assignee:@me と author:@me のマージ）
+        // クリックしても一覧から削除しない（次ポーリングで上書きされる一覧のため）。
         addSubmenu(into: menu,
                    title: "My PRs",
                    items: appState.myPRs,
                    emptyTitle: "No PRs",
-                   dotColor: .systemBlue) { [weak self] item in
-            self?.appState.remove(assignedItem: item)
-        }
+                   dotColor: .systemBlue) { _ in }
 
         // Assigned Issues
         addSubmenu(into: menu,
@@ -135,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     dotColor: dotColor
                 ) {
                     onRemove(item)
-                    NSWorkspace.shared.open(item.webURL)
+                    BrowserTabOpener.open(item.webURL)
                 }
                 submenu.addItem(menuItem)
             }
@@ -264,7 +263,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func openReleasePage(_ urlString: String) {
         guard let url = URL(string: urlString) else { return }
-        NSWorkspace.shared.open(url)
+        BrowserTabOpener.open(url)
     }
     @objc private func doQuit()       { NSApplication.shared.terminate(nil) }
     @objc private func copyError() {

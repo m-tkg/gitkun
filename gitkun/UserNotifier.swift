@@ -61,7 +61,7 @@ extension UserNotifier: UNUserNotificationCenterDelegate {
     ) {
         if let urlString = response.notification.request.content.userInfo["url"] as? String,
            let url = URL(string: urlString) {
-            NSWorkspace.shared.open(url)
+            BrowserTabOpener.open(url)
         }
         completionHandler()
     }
