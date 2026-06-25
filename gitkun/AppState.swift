@@ -101,21 +101,6 @@ final class AppState: ObservableObject {
         try await selfUpdater.performUpdate(to: release)
     }
 
-    // MARK: - 削除
-
-    func remove(notification: GitHubNotification) {
-        notifications.removeAll { $0.id == notification.id }
-    }
-
-    func remove(unreviewedPR: UnreviewedPR) {
-        unreviewedPRs.removeAll { $0.id == unreviewedPR.id }
-    }
-
-    func remove(assignedItem: AssignedItem) {
-        myPRs.removeAll { $0.id == assignedItem.id }
-        assignedIssues.removeAll { $0.id == assignedItem.id }
-    }
-
     // MARK: - フェッチ
 
     /// 手動 Refresh。通常のフェッチに加えて最新リリースの確認も行う。
