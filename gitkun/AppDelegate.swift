@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
     private var cancellable: AnyCancellable?
     private var settingsWindow: NSWindow?
+    private var kuntraykunBridge: KuntraykunBridge?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -20,6 +21,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
+
+        // kuntraykun 連携: 管理対象なら自分のアイコンを隠し、showMenu でメニューを出す。
+        let bridge = KuntraykunBridge(
+            setHidden: { [weak self] hidden in self?.statusItem.isVisible = !hidden },
+            popUpMenu: { [weak self] point in self?.statusItem.menu?.popUp(positioning: nil, at: point, in: nil) }
+        )
+        bridge.start()
+        kuntraykunBridge = bridge
 
         // 未読/未レビューの有無は表示中リストから導出する（手動同期はしない）
         cancellable = appState.$notifications.map { !$0.isEmpty }
@@ -289,5 +298,89 @@ private extension NSMenu {
         let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         item.isEnabled = false
         addItem(item)
+    }
+}
+
+// MARK: - Kuntraykun 連携
+
+/// kuntraykun（`com.mtkg.kuntraykun`）に「まとめられる」ための連携ブリッジ。
+///
+/// 仕様: kuntraykun リポジトリの `docs/kun-integration-protocol.md`（連携プロトコル v1）。
+/// gitkun は Xcode プロジェクトのため、新規ファイル追加（pbxproj 改変）を避けてこのファイル内に同梱する。
+/// 通知名・キーは kuntraykun 側と一致させること。
+///
+/// - `sync` を観測し、自分が管理対象なら（かつ kuntraykun 起動中なら）自分のアイコンを隠す。
+/// - `showMenu` を観測し、自分宛なら指定座標に自分のメニューを popUp する。
+/// - 起動時に `appLaunched` を送り、kuntraykun から最新の `sync` を受け取る。
+@MainActor
+final class KuntraykunBridge {
+    private static let kuntraykunBundleIDs = ["com.mtkg.kuntraykun", "com.mtkg.kuntraykun.local"]
+    private static let syncName = Notification.Name("com.mtkg.kuntraykun.sync")
+    private static let showMenuName = Notification.Name("com.mtkg.kuntraykun.showMenu")
+    private static let appLaunchedName = Notification.Name("com.mtkg.kun.appLaunched")
+    private static let managedDefaultsKey = "KuntraykunManaged"
+
+    private let setHidden: (Bool) -> Void
+    private let popUpMenu: (NSPoint) -> Void
+    private let myBundleID: String
+    private var isManaged: Bool
+
+    init(setHidden: @escaping (Bool) -> Void, popUpMenu: @escaping (NSPoint) -> Void) {
+        self.setHidden = setHidden
+        self.popUpMenu = popUpMenu
+        let raw = Bundle.main.bundleIdentifier ?? ""
+        self.myBundleID = raw.hasSuffix(".local") ? String(raw.dropLast(".local".count)) : raw
+        self.isManaged = UserDefaults.standard.bool(forKey: Self.managedDefaultsKey)
+    }
+
+    func start() {
+        let dnc = DistributedNotificationCenter.default()
+        dnc.addObserver(self, selector: #selector(onSync(_:)), name: Self.syncName, object: nil)
+        dnc.addObserver(self, selector: #selector(onShowMenu(_:)), name: Self.showMenuName, object: nil)
+
+        let wsnc = NSWorkspace.shared.notificationCenter
+        wsnc.addObserver(self, selector: #selector(refreshVisibility),
+                         name: NSWorkspace.didLaunchApplicationNotification, object: nil)
+        wsnc.addObserver(self, selector: #selector(refreshVisibility),
+                         name: NSWorkspace.didTerminateApplicationNotification, object: nil)
+
+        refreshVisibility()
+
+        dnc.postNotificationName(
+            Self.appLaunchedName, object: nil,
+            userInfo: ["bundleID": myBundleID, "protocol": "1"],
+            deliverImmediately: true
+        )
+    }
+
+    deinit {
+        DistributedNotificationCenter.default().removeObserver(self)
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
+    }
+
+    @objc private func onSync(_ note: Notification) {
+        let managed = (note.userInfo?["managed"] as? String ?? "")
+            .split(separator: ",").map(String.init)
+        let nowManaged = managed.contains(myBundleID)
+        if nowManaged != isManaged {
+            isManaged = nowManaged
+            UserDefaults.standard.set(nowManaged, forKey: Self.managedDefaultsKey)
+        }
+        refreshVisibility()
+    }
+
+    @objc private func onShowMenu(_ note: Notification) {
+        guard note.userInfo?["target"] as? String == myBundleID,
+              let xs = note.userInfo?["x"] as? String, let x = Double(xs),
+              let ys = note.userInfo?["y"] as? String, let y = Double(ys) else { return }
+        popUpMenu(NSPoint(x: x, y: y))
+    }
+
+    /// アイコン表示規則: 隠す = (管理対象) かつ (kuntraykun 起動中)。未起動なら隠さない。
+    @objc private func refreshVisibility() {
+        let hubRunning = Self.kuntraykunBundleIDs.contains { id in
+            !NSRunningApplication.runningApplications(withBundleIdentifier: id).isEmpty
+        }
+        setHidden(isManaged && hubRunning)
     }
 }

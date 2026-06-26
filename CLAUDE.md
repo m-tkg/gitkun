@@ -459,3 +459,16 @@ gitkun/
 ## ゴール
 
 最小構成で GitHub 通知とレビュー依頼を見逃さない体験を提供すること。
+
+---
+
+## Kuntraykun 連携（実装済み）
+
+本アプリは kuntraykun（`com.mtkg.kuntraykun`）にメニューバーアイコンを集約させる連携に対応している。
+- 実装: `gitkun/AppDelegate.swift` に `KuntraykunBridge` を同梱（gitkun は Xcode プロジェクトのため、
+  新規ファイル追加＝pbxproj 改変を避けて同ファイル内に置く）。`applicationDidFinishLaunching` で
+  `bridge.start()` を配線し、`setHidden` は `statusItem.isVisible`、`popUpMenu` は `statusItem.menu?.popUp` に委譲する。
+- 分散通知 `sync`/`showMenu` を観測し、起動時に `appLaunched` を送信。管理対象 かつ kuntraykun 起動中なら
+  自分のアイコンを隠し、`showMenu` で自分のメニューを指定座標に `popUp` する（未起動ならフォールバック表示）。
+- 仕様: kuntraykun リポジトリ `docs/kun-integration-protocol.md`、共通方針は `../CLAUDE_base.md`「Kuntraykun 連携」。
+- 管理対象フラグは `UserDefaults`（キー `KuntraykunManaged`）に永続化する。
