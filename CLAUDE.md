@@ -500,3 +500,8 @@ gitkun/
   SwiftPM 移行で Asset Catalog を廃止し、メニューバーアイコンは `Resources/*.png` を直接バンドルに同梱するように
   なったため、`Resources/MenuBarIcon.png` がそのまま kuntraykun 一覧用にも使われる（専用同梱は不要になった）。
   アプリ本体のアイコン切り替えも同じ PNG 群を `Bundle.main` から読む。
+- **実アイコンのライブ書き出し（v2）**: 未読/未レビューで色付きに切り替わる現在のアイコンを kuntraykun 一覧へ反映するため、
+  `KuntraykunIconExport.export(_:)`（`Sources/gitkun/KuntraykunIconExport.swift`）で、`statusItem.button?.image` を
+  設定する箇所すべて（起動時＋4状態の `combineLatest` sink）で現在アイコンを
+  `~/Library/Application Support/Kuntraykun/MenuBarIcons/<基底ID>.png` に書き出す（テンプレートは `.template` マーカー併記）。
+  kuntraykun はこれを優先して読むため、gitkun の状態色がそのまま一覧に出る。
