@@ -472,3 +472,7 @@ gitkun/
   自分のアイコンを隠し、`showMenu` で自分のメニューを指定座標に `popUp` する（未起動ならフォールバック表示）。
 - 仕様: kuntraykun リポジトリ `docs/kun-integration-protocol.md`、共通方針は `../CLAUDE_base.md`「Kuntraykun 連携」。
 - 管理対象フラグは `UserDefaults`（キー `KuntraykunManaged`）に永続化する。
+- **kuntraykun 一覧用のアイコン**: kuntraykun は各アプリの `Contents/Resources/MenuBarIcon.png` を読んで一覧に表示する。
+  gitkun はメニューバーアイコンを `Assets.xcassets`（Assets.car）に内包していて単体 PNG が無いと kuntraykun 側で
+  アプリアイコンにフォールバックされるため、`gitkun/MenuBarIcon.png`（`MenuBarIcon.imageset/menubar_32.png` 由来）を
+  バンドルに同梱している（Copy Bundle Resources）。アプリ本体のアイコン切り替えは従来どおり Assets の名前付き画像を使う。

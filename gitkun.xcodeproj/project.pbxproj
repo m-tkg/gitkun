@@ -23,6 +23,7 @@
 		5A77D80A2A954A14A3716057 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC8B5679344E4C9892C76324 /* UserNotifications.framework */; };
 		2D39B2F518094040BC886893 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F52D63A5C114391BE53F483 /* ServiceManagement.framework */; };
 		E8C759FA405F477CA739C3F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */; };
+		D1D1D1D1D1D1D1D1D1D1D1F2 /* MenuBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = D1D1D1D1D1D1D1D1D1D1D1F1 /* MenuBarIcon.png */; };
 		F1E5700000000000000000C1 /* VersionComparatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B1 /* VersionComparatorTests.swift */; };
 		F1E5700000000000000000C2 /* URLResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B2 /* URLResolverTests.swift */; };
 		F1E5700000000000000000C3 /* UnreviewedPRTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E5700000000000000000B3 /* UnreviewedPRTests.swift */; };
@@ -58,6 +59,7 @@
 		BC8B5679344E4C9892C76324 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		3F52D63A5C114391BE53F483 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D1D1D1D1D1D1D1D1D1D1D1F1 /* MenuBarIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = MenuBarIcon.png; sourceTree = "<group>"; };
 		B068547A7AB544039AA1D70B /* gitkun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = gitkun.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1E5700000000000000000A1 /* gitkunTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = gitkunTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1E5700000000000000000B1 /* VersionComparatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionComparatorTests.swift; sourceTree = "<group>"; };
@@ -134,6 +136,7 @@
 				9C34FAE0C7CA42869ABDF0D5 /* Info.plist */,
 				F1E5700000000000000000BD /* gitkun.entitlements */,
 				73D0F5BAD57042BBB75D4C7D /* Assets.xcassets */,
+				D1D1D1D1D1D1D1D1D1D1D1F1 /* MenuBarIcon.png */,
 			);
 			path = gitkun;
 			sourceTree = "<group>";
@@ -222,6 +225,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E8C759FA405F477CA739C3F6 /* Assets.xcassets in Resources */,
+				D1D1D1D1D1D1D1D1D1D1D1F2 /* MenuBarIcon.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,7 +409,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.11.1;
+				MARKETING_VERSION = 1.11.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkun";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -429,7 +433,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.11.1;
+				MARKETING_VERSION = 1.11.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mtkg.gitkun";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
