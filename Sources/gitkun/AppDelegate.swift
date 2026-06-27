@@ -344,6 +344,8 @@ final class KuntraykunBridge {
     private let popUpMenu: (NSPoint) -> Void
     private let myBundleID: String
     private var isManaged: Bool
+    /// `NSWorkspace.runningApplications` の KVO 監視トークン。
+    private var runningAppsObservation: NSKeyValueObservation?
 
     init(setHidden: @escaping (Bool) -> Void, popUpMenu: @escaping (NSPoint) -> Void) {
         self.setHidden = setHidden
@@ -358,13 +360,12 @@ final class KuntraykunBridge {
         dnc.addObserver(self, selector: #selector(onSync(_:)), name: Self.syncName, object: nil)
         dnc.addObserver(self, selector: #selector(onShowMenu(_:)), name: Self.showMenuName, object: nil)
 
-        let wsnc = NSWorkspace.shared.notificationCenter
-        wsnc.addObserver(self, selector: #selector(refreshVisibility),
-                         name: NSWorkspace.didLaunchApplicationNotification, object: nil)
-        wsnc.addObserver(self, selector: #selector(refreshVisibility),
-                         name: NSWorkspace.didTerminateApplicationNotification, object: nil)
-
-        refreshVisibility()
+        // LSUIElement（メニューバー常駐）アプリの起動/終了は NSWorkspace の didLaunch/didTerminate 通知が
+        // 配信されないため、runningApplications を KVO 監視する（kuntraykun のクラッシュ時もアイコンが復活する）。
+        // .initial で初回の表示判定も行う。
+        runningAppsObservation = NSWorkspace.shared.observe(\.runningApplications, options: [.initial]) { [weak self] _, _ in
+            MainActor.assumeIsolated { self?.refreshVisibility() }
+        }
 
         dnc.postNotificationName(
             Self.appLaunchedName, object: nil,
@@ -375,7 +376,7 @@ final class KuntraykunBridge {
 
     deinit {
         DistributedNotificationCenter.default().removeObserver(self)
-        NSWorkspace.shared.notificationCenter.removeObserver(self)
+        runningAppsObservation?.invalidate()
     }
 
     @objc private func onSync(_ note: Notification) {
