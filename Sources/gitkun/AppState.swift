@@ -77,10 +77,10 @@ final class AppState: ObservableObject {
     }
 
     /// 最新リリースを取得し、自バージョンより新しければ `availableUpdate` を更新する。
-    /// 新バージョンを初めて検知したときだけバナー + 音を出す（同一バージョンでは再通知しない）。
+    /// 更新があってもバナー通知は出さない（メニューの `⬆ Update to …` 項目で知らせる）。
     /// 補助機能のため、失敗時はログのみでステータスには影響させない。
-    /// - Parameter interactive: メニューからの手動チェック。`true` のときはバナー通知を抑止し、
-    ///   結果は戻り値で返す（呼び出し側がダイアログ提示する）。`false`（ポーリング）は従来どおり。
+    /// - Parameter interactive: メニューからの手動チェック。結果を戻り値で返し、呼び出し側が
+    ///   ダイアログ提示する。`false`（ポーリング）はメニュー項目の更新のみ。
     @discardableResult
     func checkForUpdate(interactive: Bool = false) async -> UpdateCheckOutcome {
         do {
@@ -92,16 +92,6 @@ final class AppState: ObservableObject {
             }
             availableUpdate = release
             logger.info("Update available: \(release.tagName, privacy: .public) (current \(self.currentVersion, privacy: .public))")
-
-            // 手動チェック時はダイアログで知らせるためバナーは出さない。
-            if !interactive, store.lastNotifiedReleaseTag != release.tagName {
-                store.lastNotifiedReleaseTag = release.tagName
-                let url = URL(string: release.htmlUrl) ?? URL(string: "https://github.com")!
-                notifier.send(title: "gitkun Update Available",
-                              body: "\(release.tagName) is available (current \(currentVersion))",
-                              url: url)
-                notifier.playSound(named: store.updateSoundName)
-            }
             return .available(release)
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")

@@ -11,9 +11,7 @@ final class LocalStore {
         static let pollingInterval = "pollingInterval"
         static let unreadSoundName = "unreadSoundName"
         static let reviewSoundName = "reviewSoundName"
-        static let updateSoundName = "updateSoundName"
         static let excludeWIP = "excludeWIP"
-        static let lastNotifiedReleaseTag = "lastNotifiedReleaseTag"
     }
 
     private init() {
@@ -22,6 +20,9 @@ final class LocalStore {
         defaults.removeObject(forKey: "diffStrategy")
         // soundEnabled は各サウンドの N/A 選択（*SoundName）に置き換えられた
         defaults.removeObject(forKey: "soundEnabled")
+        // アップデート通知バナーを廃止したため、関連キーも掃除する
+        defaults.removeObject(forKey: "updateSoundName")
+        defaults.removeObject(forKey: "lastNotifiedReleaseTag")
     }
 
     var knownIDs: Set<String> {
@@ -54,12 +55,6 @@ final class LocalStore {
         set { defaults.set(newValue, forKey: Keys.reviewSoundName) }
     }
 
-    /// アプリ更新を検知したときに鳴らす音の名前。SettingsView の @AppStorage と同じキー。
-    var updateSoundName: String {
-        get { defaults.string(forKey: Keys.updateSoundName) ?? "Glass" }
-        set { defaults.set(newValue, forKey: Keys.updateSoundName) }
-    }
-
     /// draft / WIP の PR を Review Requests から除外するか。SettingsView の @AppStorage と同じキー。
     var excludeWIP: Bool {
         get {
@@ -68,12 +63,6 @@ final class LocalStore {
                 : defaults.bool(forKey: Keys.excludeWIP)
         }
         set { defaults.set(newValue, forKey: Keys.excludeWIP) }
-    }
-
-    /// 最後にバナー通知した最新リリースのタグ。同一バージョンの再通知を抑止する。
-    var lastNotifiedReleaseTag: String? {
-        get { defaults.string(forKey: Keys.lastNotifiedReleaseTag) }
-        set { defaults.set(newValue, forKey: Keys.lastNotifiedReleaseTag) }
     }
 
     // 起動ごとにリセットするメモリ変数
