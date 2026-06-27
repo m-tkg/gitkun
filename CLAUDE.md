@@ -121,7 +121,7 @@ swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"
 - メニューから通知一覧、レビュー依頼一覧、My PRs / Assigned Issues 一覧を表示
 - 項目クリックでブラウザ遷移（クリックで一覧から即削除はしない）。通知だけはクリック時に refresh を実行し、GitHub 側で既読になった通知が次フェッチで一覧から消える。レビュー依頼 / My PRs / Assigned Issues は次ポーリングの再取得で更新
 - **未読/未レビューの組み合わせに応じてメニューバーアイコンが4通りに切り替わる**（My PRs / Assigned Issues はアイコン状態に影響しない）
-- 約1時間ごとに自リポジトリ（`m-tkg/gitkun`）の最新リリースを確認し、新バージョンがあれば通知 + メニューから自己更新できる（後述「更新チェック・自己更新」）
+- 約1時間ごとに自リポジトリ（`m-tkg/gitkun`）の最新リリースを確認し、新バージョンがあればメニュー項目から自己更新できる（バナー通知はしない。後述「更新チェック・自己更新」）
 
 ### 未レビュー PR の WIP フィルタ
 
@@ -264,7 +264,7 @@ Bundle からファイルを読み、`isTemplate`（通常アイコンのみ tru
 
 - 通知: タイトル `"GitHub Notifications"`、本文 `"PR title (+N more)"`、音は `unreadSoundName`
 - レビュー依頼: タイトル `"GitHub Review Requests"`、本文 `"PR title (+N more)"`、音は `reviewSoundName`
-- アプリ更新通知の音は `updateSoundName`
+- アプリ更新はバナー通知しない（メニューの `⬆ Update to vX.Y.Z…` 項目で知らせる）
 - いずれも音名が `N/A` の場合は鳴らさない（バナーは出る）
 
 ### クリック時
@@ -290,9 +290,10 @@ Bundle からファイルを読み、`isTemplate`（通常アイコンのみ tru
 ## 更新チェック・自己更新
 
 - 起動時に1回、以降は約1時間ごとに `gh api /repos/m-tkg/gitkun/releases/latest` で最新リリースを確認（`Poller` の第2インスタンス）。手動 Refresh 時にも確認する
+- メニューの `Check for Updates…` でいつでも手動チェックできる（結果はダイアログで提示：最新／更新あり→インストール確認／失敗→エラー）
 - `VersionComparator` がタグ（`v` プレフィックス可）と `CFBundleShortVersionString` を数値比較し、新しければ `AppState.availableUpdate` にセット
-- 新バージョンを初めて検知したときだけ通知バナー + 音（`lastNotifiedReleaseTag` で再通知を抑止）
-- メニューに `⬆ Update to vX.Y.Z…` 項目が出現。実行すると `SelfUpdater` が:
+- 更新を検知してもバナー通知は出さない（メニュー項目で知らせる）
+- メニューに `⬆ Update to vX.Y.Z…` 項目が出現（更新なし時は同じ位置に `Check for Updates…`）。実行すると `SelfUpdater` が:
   1. `gh release download` で zip を取得
   2. `ditto` で展開し、Bundle ID を検証
   3. 旧プロセス終了を待って `.app` を入れ替える切り離しシェルスクリプトを起動し、自身は終了
@@ -383,22 +384,21 @@ GitHub が新しい reason を追加した場合は「その他」として末�
 | `pollingInterval` | Int | 30 |
 | `unreadSoundName` | String | `"Glass"` |
 | `reviewSoundName` | String | `"Glass"` |
-| `updateSoundName` | String | `"Glass"` |
 | `excludeWIP` | Bool | `true` |
 | `knownNotificationIDs` | [String] | `[]` |
 | `knownUnreviewedPRIDs` | [Int] | `[]` |
-| `lastNotifiedReleaseTag` | String? | `nil` |
 
 通知音と Launch at login はメニューの `Settings…` から変更できる（`SettingsView.swift` を
 `AppDelegate` が `NSWindow` + `NSHostingController` で表示。SwiftUI の Settings シーンは
 macOS 14+ でセレクタ経由の表示がブロックされたため使わない）。
-未読 / レビュー依頼 / 更新検知でそれぞれ別の音を設定でき、選択肢は `/System/Library/Sounds`
+未読 / レビュー依頼でそれぞれ別の音を設定でき、選択肢は `/System/Library/Sounds`
 から実行時に列挙、選択時にプレビュー再生する。各 Picker の先頭には `N/A`
 （`SystemSounds.noSound`）があり、選ぶとそのイベントの音だけ鳴らさない。
 `@AppStorage` と `LocalStore` は同じ UserDefaults キーを共有する。
 ポーリング間隔のみ UI 未実装で `LocalStore` 経由で変更可能。
-旧キー `diffStrategy` / `knownNotificationUpdatedAts` / `soundEnabled` は廃止済みで、
-起動時に削除される（音全体の ON/OFF は各サウンドの N/A 選択に置き換え）。
+旧キー `diffStrategy` / `knownNotificationUpdatedAts` / `soundEnabled` /
+`updateSoundName` / `lastNotifiedReleaseTag` は廃止済みで、起動時に削除される
+（音全体の ON/OFF は各サウンドの N/A 選択に置き換え。更新検知のバナー通知は廃止）。
 
 ---
 
