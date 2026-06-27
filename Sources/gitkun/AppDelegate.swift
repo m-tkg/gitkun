@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.image = Self.menuBarImage(named: "MenuBarIcon")
+        KuntraykunIconExport.export(statusItem.button?.image)
 
         let menu = NSMenu()
         menu.delegate = self
@@ -44,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case (false, false): name = "MenuBarIcon"
                 }
                 self?.statusItem.button?.image = Self.menuBarImage(named: name)
+                KuntraykunIconExport.export(self?.statusItem.button?.image)
             }
 
         appState.startPolling()
