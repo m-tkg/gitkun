@@ -17,7 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(named: "MenuBarIcon")
+        statusItem.button?.image = Self.menuBarImage(named: "MenuBarIcon")
 
         let menu = NSMenu()
         menu.delegate = self
@@ -43,10 +43,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case (false, true):  name = "MenuBarIconUnreview"
                 case (false, false): name = "MenuBarIcon"
                 }
-                self?.statusItem.button?.image = NSImage(named: name)
+                self?.statusItem.button?.image = Self.menuBarImage(named: name)
             }
 
         appState.startPolling()
+    }
+
+    // MARK: - メニューバーアイコン
+
+    /// メニューバーアイコンを `Contents/Resources` の PNG から読み込む。
+    /// Asset Catalog を廃止したため `NSImage(named:)` ではなくバンドル内のファイルパスで解決する。
+    /// - 通常アイコン（`MenuBarIcon`）のみ template 指定でライト/ダークに自動追従。
+    ///   未読/未レビュー系（色付き）は original のまま表示する。
+    /// - 画像実体は 32px。`size` を 16pt に固定して Retina で高精細に描画させる。
+    static func menuBarImage(named name: String) -> NSImage? {
+        guard let url = Bundle.main.url(forResource: name, withExtension: "png"),
+              let image = NSImage(contentsOf: url) else {
+            logger.error("menu bar icon not found in bundle: \(name, privacy: .public)")
+            return nil
+        }
+        image.isTemplate = (name == "MenuBarIcon")
+        image.size = NSSize(width: 16, height: 16)
+        return image
     }
 
     // MARK: - メニュー構築
@@ -307,7 +325,6 @@ private extension NSMenu {
 /// kuntraykun（`com.mtkg.kuntraykun`）に「まとめられる」ための連携ブリッジ。
 ///
 /// 仕様: kuntraykun リポジトリの `docs/kun-integration-protocol.md`（連携プロトコル v1）。
-/// gitkun は Xcode プロジェクトのため、新規ファイル追加（pbxproj 改変）を避けてこのファイル内に同梱する。
 /// 通知名・キーは kuntraykun 側と一致させること。
 ///
 /// - `sync` を観測し、自分が管理対象なら（かつ kuntraykun 起動中なら）自分のアイコンを隠す。
