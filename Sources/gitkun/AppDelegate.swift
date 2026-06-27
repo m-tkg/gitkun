@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     let appState = AppState()
     private var cancellable: AnyCancellable?
+    private var updateCancellable: AnyCancellable?
     private var settingsWindow: NSWindow?
     private var kuntraykunBridge: KuntraykunBridge?
 
@@ -31,6 +32,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         bridge.start()
         kuntraykunBridge = bridge
+
+        // アップデート有無を kuntraykun に報告する（集約バッジ/赤丸用）。
+        updateCancellable = appState.$availableUpdate.map { $0 != nil }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] hasUpdate in self?.kuntraykunBridge?.reportUpdate(hasUpdate) }
 
         // 未読/未レビューの有無は表示中リストから導出する（手動同期はしない）
         cancellable = appState.$notifications.map { !$0.isEmpty }
@@ -372,6 +379,7 @@ final class KuntraykunBridge {
     private static let syncName = Notification.Name("com.mtkg.kuntraykun.sync")
     private static let showMenuName = Notification.Name("com.mtkg.kuntraykun.showMenu")
     private static let appLaunchedName = Notification.Name("com.mtkg.kun.appLaunched")
+    private static let updateStateName = Notification.Name("com.mtkg.kun.updateState")
     private static let managedDefaultsKey = "KuntraykunManaged"
 
     private let setHidden: (Bool) -> Void
@@ -382,6 +390,8 @@ final class KuntraykunBridge {
     private var runningAppsObservation: NSKeyValueObservation?
     /// 遅延表示（復活）の世代。再評価のたびに進めて保留中の復活をキャンセルする。
     private var showGeneration = 0
+    /// 直近に kuntraykun へ報告したアップデート有無。sync 受信時に再送して整合させる。
+    private var lastReportedUpdate = false
 
     init(setHidden: @escaping (Bool) -> Void, popUpMenu: @escaping (NSPoint) -> Void) {
         self.setHidden = setHidden
@@ -424,6 +434,18 @@ final class KuntraykunBridge {
             UserDefaults.standard.set(nowManaged, forKey: Self.managedDefaultsKey)
         }
         refreshVisibility()
+        // 起動直後の kuntraykun にも現在のアップデート状態を伝える。
+        reportUpdate(lastReportedUpdate)
+    }
+
+    /// 「アップデートあり/なし」を kuntraykun に報告する（更新検知時・解消時に呼ぶ）。
+    func reportUpdate(_ hasUpdate: Bool) {
+        lastReportedUpdate = hasUpdate
+        DistributedNotificationCenter.default().postNotificationName(
+            Self.updateStateName, object: nil,
+            userInfo: ["bundleID": myBundleID, "hasUpdate": hasUpdate ? "1" : "0", "protocol": "1"],
+            deliverImmediately: true
+        )
     }
 
     @objc private func onShowMenu(_ note: Notification) {
