@@ -99,7 +99,7 @@ base64 -i DeveloperID.p12 | pbcopy
 
 ### 6. バージョンを上げてマージ
 
-`project.pbxproj` の `MARKETING_VERSION` を上げて `main` にマージすると、リリース
+`Resources/Info.plist` の `CFBundleShortVersionString` を上げて `main` にマージすると、リリース
 ワークフローが **Developer ID 署名 → 公証 → staple** して `v<version>` を作成する。
 
 - `SIGNING_*` のみで `NOTARY_*` が無い → 署名のみ（公証スキップ＝Gatekeeper 警告は残る）
@@ -119,13 +119,16 @@ ad-hoc 版（〜v1.10.0）から署名版へ切り替わる初回だけ署名が
 
 ## ローカルで署名する場合（任意・開発用）
 
-`make release` でビルドした後、手元で Developer ID 署名・公証する:
+`bundle.sh` に `SIGN_IDENTITY` を渡せば、Developer ID 署名まで一括で済む（`--entitlements` も自動付与）:
 
 ```sh
-APP=.build/Build/Products/Release/gitkun.app
-codesign --force --deep --options runtime --timestamp \
-  --sign "Developer ID Application: Your Name (TEAMID1234)" "$APP"
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID1234)" bash Scripts/bundle.sh release
+# 続けて手元で公証・staple する場合
+APP=gitkun.app
 ditto -c -k --keepParent "$APP" notarize.zip
 xcrun notarytool submit notarize.zip --apple-id "<apple-id>" --password "<app-pw>" --team-id "<team-id>" --wait
 xcrun stapler staple "$APP"
 ```
+
+> bundle.sh は `Resources/gitkun.entitlements` を `--entitlements` で渡すため、apple-events 権限が
+> 剥がれない。手動で `codesign` し直すときも必ず `--entitlements Resources/gitkun.entitlements` を付けること。

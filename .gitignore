@@ -1,12 +1,12 @@
 # ビルド成果物
 .build/
 
+# bundle.sh が生成する .app
+/gitkun.app/
+/gitkun (Local).app/
+
 # macOS
 .DS_Store
-
-# Xcode ユーザー固有設定
-*.xcuserdata/
-gitkun.xcodeproj/xcuserdata/
 
 # Claude Code ローカル設定
 .claude/
