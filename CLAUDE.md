@@ -11,7 +11,7 @@ gitkun は、macOS のメニューバーに常駐し、GitHub の未読通知と
 ## 前提条件
 
 - macOS 13 Ventura 以降
-- Xcode がインストール済みであること
+- Swift toolchain がインストール済みであること（`swift build` / `swift test` が使えること。Xcode 本体は不要だが Command Line Tools は必要）
 - `gh` CLI がインストール済みであること（`/opt/homebrew/bin/gh` または `/usr/local/bin/gh`）
 - `gh auth login` が完了していること
 - App Store 配布や sandbox 制約は考慮しない
@@ -20,36 +20,44 @@ gitkun は、macOS のメニューバーに常駐し、GitHub の未読通知と
 
 ## 技術スタック
 
-- Swift 5.0
+- Swift Package Manager（swift-tools-version 5.9、Xcode/xcodeproj は使わない）
 - AppKit（NSStatusItem、NSMenu、NSPopover、アイコン切り替え、音声再生、ブラウザ起動）
-- SwiftUI（gitkunApp.swift の Settings シーンのみ）
+- SwiftUI（gitkunApp.swift の Settings シーン・SettingsView のみ）
 - async/await + Combine
 - OSLog（ロギング）
 
 対応OSは macOS 13+ のみ。後方互換性は考慮しない。
 
+ビルドは whisperkun / snapperkun と同様、SwiftPM + `Scripts/bundle.sh`（.app を手組み）で行う。
+`.app` バンドルは bundle.sh が `swift build` の成果物・`Resources/` のアイコン・`Info.plist` から組み立てる。
+
 ---
 
 ## ビルド・実行
 
+Makefile は廃止。`swift` コマンドと `Scripts/bundle.sh` を直接使う。
+
 ```bash
-# Debug ビルド & 起動（既存プロセスを終了してから起動）
-make run
+# ビルド（Debug）
+swift build
 
-# Debug ビルドのみ
-make debug
+# ユニットテスト（gitkunCoreTests）
+swift test
 
-# Release ビルド
-make release
+# .app を組み立て（Release・ad-hoc 署名）
+bash Scripts/bundle.sh release
 
-# ユニットテスト（gitkunTests）
-make test
+# ローカル検証用 .app（本番と TCC 権限を分離した「gitkun (Local)」を生成して起動）
+pkill -x gitkun 2>/dev/null; LOCAL=1 bash Scripts/bundle.sh debug && open "gitkun (Local).app"
 
 # ビルド成果物削除
-make clean
+swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"
 ```
 
-`make release` はローカル向けの **ad-hoc 署名**ビルド。配布用の署名・公証は CI が行う（後述）。
+`bash Scripts/bundle.sh release` はローカル向けの **ad-hoc 署名**ビルド。配布用の署名・公証は CI が行う（後述）。
+`LOCAL=1` を付けると bundle ID を `com.mtkg.gitkun.local` に分け、本番アプリと
+オートメーション(TCC)権限が衝突しないようにする。`SIGN_IDENTITY="Apple Development: …"` を併用すると
+ローカルでも安定署名になり、再ビルドのたびに権限を取り直さずに済む。
 
 ---
 
@@ -62,7 +70,7 @@ make clean
 - **PR 作成後に追加修正するときは、まずその PR がマージ済みでないか確認する**
   （`gh pr view <番号> --json state,mergedAt`）。マージ済みのブランチへ push しても `main` には
   反映されない（孤立コミットになる）。マージ済みなら**最新 `main` から新ブランチを切り直し**、
-  必要なら `MARKETING_VERSION` を上げて別 PR を出す。
+  必要なら `Resources/Info.plist` の `CFBundleShortVersionString` を上げて別 PR を出す。
 - リリース用 Actions は `push: branches: [main]` で発火するため、**main への push がそのまま
   リリースに直結する**。事故防止の意味でも main 直 push は避け、PR マージ経由にする。
 
@@ -72,16 +80,20 @@ make clean
 
 リリースは GitHub Actions（`.github/workflows/release.yml`）が担当する。
 
-- `main` に push されると、`gitkun.xcodeproj/project.pbxproj` の `MARKETING_VERSION` を読み取り、
+- `main` に push されると、`Resources/Info.plist` の `CFBundleShortVersionString` を読み取り、
   `v<version>` タグのリリースを自動作成する（同名リリースが既にあればスキップ）。
-  → **リリースは `MARKETING_VERSION` を上げて `main` にマージするだけ**。
+  → **リリースは `CFBundleShortVersionString` を上げて `main` にマージするだけ**。
 - ビルド成果物（`gitkun.app` を zip 化）をリリースアセットとして添付。自己更新はこの zip を取得する。
 
 ### 署名・公証（Developer ID + notarization）
 
 - 配布版は **Developer ID Application 証明書**（Team ID `G72M73C546`）で署名し、**公証（notarization）+ staple** する。
-  `make release` の ad-hoc 署名を CI が `codesign --options runtime --timestamp --entitlements gitkun/gitkun.entitlements`
-  で上書き署名し直す（`--entitlements` を渡さないと apple-events entitlement が剥がれるため必須）。
+  `Scripts/bundle.sh` が `SIGN_IDENTITY` 環境変数で Developer ID 署名まで行う（CI は証明書を一時キーチェーンに
+  import してから `SIGN_IDENTITY` を渡す）。`SIGN_IDENTITY` 未設定なら ad-hoc 署名にフォールバックする。
+  bundle.sh は ad-hoc / Developer ID どちらの分岐でも
+  `codesign --options runtime --timestamp --entitlements Resources/gitkun.entitlements` 相当を実行する
+  （`--entitlements` を渡さないと apple-events entitlement が剥がれるため必須。
+  CI には剥がれを検知する `Verify signing and entitlements` ステップもある）。
 - **安定署名でなければアップデート越しに自動化(TCC)権限が保持されない**。ad-hoc はビルドごとに署名が
   変わり、更新のたびにブラウザ制御の許可を取り直す羽目になる。公証すれば Gatekeeper 警告も消え、他人にも配布可能。
 - 署名・公証情報は GitHub の **Secrets 6 つ**で CI に渡す。**Secrets 未設定時は ad-hoc 署名（公証スキップ）に
@@ -227,11 +239,17 @@ Search API は `{ "items": [...] }` 形式。`repository` オブジェクトを�
 
 ### アイコンアセット
 
-- `gitkun/Assets.xcassets/AppIcon.appiconset/` — アプリアイコン（16〜1024px）
-- `gitkun/Assets.xcassets/MenuBarIcon.imageset/` — 通常アイコン（template、16/32px）
-- `gitkun/Assets.xcassets/MenuBarIconUnread.imageset/` — 未読ありアイコン（original、16/32px）
-- `gitkun/Assets.xcassets/MenuBarIconUnreview.imageset/` — 未レビューありアイコン（original、16/32px）
-- `gitkun/Assets.xcassets/MenuBarIconUnreadAndUnreview.imageset/` — 両方ありアイコン（original、16/32px）
+Asset Catalog（`.xcassets`）は使わない。PNG を `Resources/` に直置きし、bundle.sh が `.app` の
+`Contents/Resources/` へコピーする。アプリは `Bundle.main.url(forResource:withExtension:)` で読み込む。
+
+- `Resources/AppIcon.png` — アプリアイコン元画像（1024px）。bundle.sh が `sips`+`iconutil` で `AppIcon.icns` を生成
+- `Resources/MenuBarIcon.png` — 通常アイコン（32px）。`AppDelegate.menuBarImage(named:)` が `isTemplate = true` を設定しライト/ダークに追従。kuntraykun 一覧表示にもこのファイルが使われる
+- `Resources/MenuBarIconUnread.png` — 未読ありアイコン（32px、色付き = original）
+- `Resources/MenuBarIconUnreview.png` — 未レビューありアイコン（32px、色付き）
+- `Resources/MenuBarIconUnreadAndUnreview.png` — 両方ありアイコン（32px、色付き）
+
+メニューバーアイコンは `NSImage(named:)` ではなく `AppDelegate.menuBarImage(named:)` が
+Bundle からファイルを読み、`isTemplate`（通常アイコンのみ true）と `size`（16pt）をコードで設定する。
 
 ---
 
@@ -412,27 +430,33 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 gitkun/
 ├── CLAUDE.md
 ├── README.md
-├── Makefile
-├── gitkun.xcodeproj/
-├── gitkunTests/              # ユニットテスト（純粋ロジックのみ。アプリは起動しない）
-│   └── *Tests.swift
-└── gitkun/
-    ├── Info.plist            # LSUIElement=YES
-    ├── Assets.xcassets/
-    │   ├── AppIcon.appiconset/                     # アプリアイコン
-    │   ├── MenuBarIcon.imageset/                   # 通常アイコン（template）
-    │   ├── MenuBarIconUnread.imageset/             # 未読ありアイコン（original）
-    │   ├── MenuBarIconUnreview.imageset/           # 未レビューありアイコン（original）
-    │   └── MenuBarIconUnreadAndUnreview.imageset/  # 両方ありアイコン（original）
-    └── *.swift
+├── Package.swift            # SwiftPM（gitkunCore + gitkun + gitkunCoreTests の3ターゲット）
+├── Scripts/
+│   └── bundle.sh            # swift build → .app 手組み → codesign
+├── Resources/              # bundle.sh が .app の Contents/ へコピー
+│   ├── Info.plist           # LSUIElement=YES。CFBundleShortVersionString がバージョンの真実
+│   ├── gitkun.entitlements  # apple-events のみ（コメント無し: AMFI 制約）
+│   ├── AppIcon.png          # 1024px → bundle.sh が AppIcon.icns を生成
+│   ├── MenuBarIcon.png                  # 通常アイコン（template、32px）
+│   ├── MenuBarIconUnread.png            # 未読あり（色付き、32px）
+│   ├── MenuBarIconUnreview.png          # 未レビューあり（色付き、32px）
+│   └── MenuBarIconUnreadAndUnreview.png # 両方あり（色付き、32px）
+├── Sources/
+│   ├── gitkunCore/          # 純粋ロジック（テスト対象、AppKit 非依存）
+│   │   ├── Models.swift  URLResolver.swift  FetchDiff.swift  GitHubTabMatcher.swift
+│   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine 依存）
+│       └── *.swift
+└── Tests/
+    └── gitkunCoreTests/     # ユニットテスト（@testable import gitkunCore。アプリは起動しない）
+        └── *Tests.swift
 ```
 
 ### テスト
 
-- `gitkunTests` は TEST_HOST を使わず、テスト対象の純粋ロジック（`Models.swift`・`URLResolver.swift`・`FetchDiff.swift`）を直接コンパイルする方式
-  - アプリを起動しないため、テスト実行時に GitHub ポーリングや通知権限ダイアログが発生しない
-  - 新たにテスト対象のソースを増やす場合は、そのファイルを `gitkunTests` ターゲットの Sources にも追加する（AppKit 依存のないファイルに限る）
-- 実行は `make test`
+- テスト対象は `gitkunCore` ターゲットの純粋ロジック（`Models.swift`・`URLResolver.swift`・`FetchDiff.swift`・`GitHubTabMatcher.swift`）。テストは `@testable import gitkunCore` でアクセスする
+  - アプリ（`gitkun` ターゲット）を起動しないため、テスト実行時に GitHub ポーリングや通知権限ダイアログが発生しない
+  - 新たにテスト対象のロジックを増やす場合は、AppKit 非依存なら `Sources/gitkunCore/` に置く。app から使う型は `public` 化する（テストは `@testable` なので internal でも見える）
+- 実行は `swift test`
 
 ---
 
@@ -440,8 +464,8 @@ gitkun/
 
 - `MenuBarExtra` のラベルは静的レンダリングのため動的更新不可 → `NSStatusItem` を直接管理
 - GUI アプリから `gh` を起動すると Keychain アクセスが不安定になるため、`gh auth token` でトークンをキャッシュして `GH_TOKEN` 環境変数で渡す
-- Dropbox 経由のアイコンファイルに拡張属性が付くため、`make release` 前に `xattr -cr` を実行
-- `make run` は既存プロセスを `pkill` してから起動する（二重起動防止との競合回避）
+- ローカル起動は `LOCAL=1 bash Scripts/bundle.sh debug` で `pkill -x gitkun` してから `open`（二重起動防止との競合回避）
+- `Resources/gitkun.entitlements` にコメントを入れると codesign の AMFI パーサが `syntax error` で失敗するため、キーのみのミニマル構成にする
 - `NSMenuItem` のカスタムビューはホバーハイライトを自前実装する必要がある（`NSTrackingArea` + `mouseEntered/mouseExited`）
 - `NSMenuItem` のカスタムビューはクリックで `enclosingMenuItem?.menu?.cancelTracking()` を呼ばないとメニューが閉じない
 
@@ -465,14 +489,14 @@ gitkun/
 ## Kuntraykun 連携（実装済み）
 
 本アプリは kuntraykun（`com.mtkg.kuntraykun`）にメニューバーアイコンを集約させる連携に対応している。
-- 実装: `gitkun/AppDelegate.swift` に `KuntraykunBridge` を同梱（gitkun は Xcode プロジェクトのため、
-  新規ファイル追加＝pbxproj 改変を避けて同ファイル内に置く）。`applicationDidFinishLaunching` で
+- 実装: `Sources/gitkun/AppDelegate.swift` に `KuntraykunBridge` を同梱（whisperkun / snapperkun と同じく
+  同ファイル内に置く）。`applicationDidFinishLaunching` で
   `bridge.start()` を配線し、`setHidden` は `statusItem.isVisible`、`popUpMenu` は `statusItem.menu?.popUp` に委譲する。
 - 分散通知 `sync`/`showMenu` を観測し、起動時に `appLaunched` を送信。管理対象 かつ kuntraykun 起動中なら
   自分のアイコンを隠し、`showMenu` で自分のメニューを指定座標に `popUp` する（未起動ならフォールバック表示）。
 - 仕様: kuntraykun リポジトリ `docs/kun-integration-protocol.md`、共通方針は `../CLAUDE_base.md`「Kuntraykun 連携」。
 - 管理対象フラグは `UserDefaults`（キー `KuntraykunManaged`）に永続化する。
 - **kuntraykun 一覧用のアイコン**: kuntraykun は各アプリの `Contents/Resources/MenuBarIcon.png` を読んで一覧に表示する。
-  gitkun はメニューバーアイコンを `Assets.xcassets`（Assets.car）に内包していて単体 PNG が無いと kuntraykun 側で
-  アプリアイコンにフォールバックされるため、`gitkun/MenuBarIcon.png`（`MenuBarIcon.imageset/menubar_32.png` 由来）を
-  バンドルに同梱している（Copy Bundle Resources）。アプリ本体のアイコン切り替えは従来どおり Assets の名前付き画像を使う。
+  SwiftPM 移行で Asset Catalog を廃止し、メニューバーアイコンは `Resources/*.png` を直接バンドルに同梱するように
+  なったため、`Resources/MenuBarIcon.png` がそのまま kuntraykun 一覧用にも使われる（専用同梱は不要になった）。
+  アプリ本体のアイコン切り替えも同じ PNG 群を `Bundle.main` から読む。

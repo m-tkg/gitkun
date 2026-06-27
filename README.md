@@ -9,7 +9,7 @@ macOS のメニューバーに常駐し、GitHub の未読通知を定期的に�
 ## 前提条件
 
 - macOS 13 Ventura 以降
-- [Xcode](https://developer.apple.com/xcode/)
+- Swift toolchain（`swift build` / `swift test`。Xcode 本体は不要、Command Line Tools で可）
 - [gh CLI](https://cli.github.com/)
 
 ```bash
@@ -19,27 +19,31 @@ gh auth login
 
 ## ビルド
 
+Xcode は使わず Swift Package Manager + `Scripts/bundle.sh` でビルドする。
+
 ```bash
-make run     # Debug ビルド & 起動
-make debug   # Debug ビルドのみ
-make release # Release ビルド
-make clean   # ビルド成果物削除
+swift build                       # ビルド（Debug）
+swift test                        # ユニットテスト
+bash Scripts/bundle.sh release    # .app を組み立て（Release・ad-hoc 署名）
+
+# ローカル検証用（本番と権限を分けた「gitkun (Local)」を生成して起動）
+LOCAL=1 bash Scripts/bundle.sh debug && open "gitkun (Local).app"
 ```
 
 ## インストール
 
-1. `make release` で `.build/Build/Products/Release/gitkun.app` をビルド
+1. `bash Scripts/bundle.sh release` で `gitkun.app`（リポジトリ直下）をビルド
 2. `gitkun.app` を `/Applications` へコピー
 3. 初回起動時に通知の許可ダイアログが表示されたら「許可」を選択
 
 ## リリース手順
 
-バージョンは `gitkun.xcodeproj/project.pbxproj` の `MARKETING_VERSION`（3桁 semver、例 `1.2.0`）を唯一の源とする。アプリが表示するバージョンも `Info.plist` 経由でこの値を参照する。
+バージョンは `Resources/Info.plist` の `CFBundleShortVersionString`（3桁 semver、例 `1.2.0`）を唯一の源とする。アプリが表示するバージョンもこの値を参照する。
 
-リリースは GitHub Actions（`.github/workflows/release.yml`）が **main への push または手動実行（Run workflow）をトリガー**に動き、現在の `MARKETING_VERSION` を読み取って `v<version>` のリリースがまだ無ければ、Release ビルド → `gitkun.app` を zip 化 → タグ作成 → GitHub Releases へバイナリ添付までを自動で行う。
+リリースは GitHub Actions（`.github/workflows/release.yml`）が **main への push または手動実行（Run workflow）をトリガー**に動き、現在の `CFBundleShortVersionString` を読み取って `v<version>` のリリースがまだ無ければ、`bundle.sh` でビルド → `gitkun.app` を zip 化 → タグ作成 → GitHub Releases へバイナリ添付までを自動で行う。
 
 ```
-1. PR で MARKETING_VERSION を上げる（例 1.2.0）
+1. PR で CFBundleShortVersionString を上げる（例 1.2.0）
 2. main にマージ → 自動で v1.2.0 がタグ付けされ、gitkun.zip 付きで公開される
 ```
 
