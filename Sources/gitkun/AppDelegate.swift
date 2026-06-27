@@ -74,9 +74,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildMenu(_ menu: NSMenu) {
         menu.removeAllItems()
 
-        // 通知セクション（reason 別 submenu）
-        menu.addItem(disabled: "GitHub Notifications")
+        // 先頭に現在バージョン（操作不可）。
+        menu.addItem(disabled: "gitkun v\(appState.currentVersion)")
         menu.addItem(.separator())
+
+        // 通知セクション（reason 別 submenu）
         if appState.notifications.isEmpty {
             menu.addItem(disabled: "No unread notifications")
         } else {
@@ -110,21 +112,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(buildStatusMenuItem())
         menu.addItem(.separator())
 
-        // 更新あり（最新リリースが自バージョンより新しいときのみ表示）
-        if let update = appState.availableUpdate {
-            let updateItem = NSMenuItem(title: "⬆ Update to \(update.tagName)…",
-                                        action: #selector(installUpdate), keyEquivalent: "")
-            updateItem.target = self
-            updateItem.isEnabled = !appState.isFetching
-            menu.addItem(updateItem)
-            menu.addItem(.separator())
-        }
-
-        // 設定
+        // 設定・更新
         let refresh = NSMenuItem(title: "Refresh", action: #selector(doRefresh), keyEquivalent: "")
         refresh.target = self
         refresh.isEnabled = !appState.isFetching
         menu.addItem(refresh)
+
+        // 更新あり → インストール、なし → 手動チェック（1項目で切り替え）。
+        let updateItem: NSMenuItem
+        if let update = appState.availableUpdate {
+            updateItem = NSMenuItem(title: "⬆ Update to \(update.tagName)…",
+                                    action: #selector(installUpdate), keyEquivalent: "")
+        } else {
+            updateItem = NSMenuItem(title: "Check for Updates…",
+                                    action: #selector(checkForUpdate), keyEquivalent: "")
+        }
+        updateItem.target = self
+        updateItem.isEnabled = !appState.isFetching
+        menu.addItem(updateItem)
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
@@ -252,9 +257,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
+    /// メニューからの手動更新チェック。結果をダイアログで提示する。
+    @objc private func checkForUpdate() {
+        Task { @MainActor in
+            switch await appState.checkForUpdate(interactive: true) {
+            case .available(let release):
+                promptInstall(release)
+            case .upToDate:
+                NSApp.activate(ignoringOtherApps: true)
+                let alert = NSAlert()
+                alert.messageText = "You’re up to date"
+                alert.informativeText = "gitkun v\(appState.currentVersion) is the latest version."
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            case .failed(let error):
+                NSApp.activate(ignoringOtherApps: true)
+                let alert = NSAlert()
+                alert.messageText = "Update check failed"
+                alert.informativeText = error.localizedDescription
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
+        }
+    }
+
     @objc private func installUpdate() {
         guard let update = appState.availableUpdate else { return }
+        promptInstall(update)
+    }
 
+    /// 更新のインストール確認ダイアログ。
+    private func promptInstall(_ update: ReleaseInfo) {
+        NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
         alert.messageText = "Update to \(update.tagName)?"
         alert.informativeText = "gitkun will quit and relaunch with the new version."

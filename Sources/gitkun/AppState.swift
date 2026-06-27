@@ -69,29 +69,43 @@ final class AppState: ObservableObject {
 
     // MARK: - 更新チェック
 
+    /// 手動「Check for Updates…」の結果。バナーを出さず呼び出し側でダイアログ提示するために使う。
+    enum UpdateCheckOutcome {
+        case upToDate
+        case available(ReleaseInfo)
+        case failed(Error)
+    }
+
     /// 最新リリースを取得し、自バージョンより新しければ `availableUpdate` を更新する。
     /// 新バージョンを初めて検知したときだけバナー + 音を出す（同一バージョンでは再通知しない）。
     /// 補助機能のため、失敗時はログのみでステータスには影響させない。
-    func checkForUpdate() async {
+    /// - Parameter interactive: メニューからの手動チェック。`true` のときはバナー通知を抑止し、
+    ///   結果は戻り値で返す（呼び出し側がダイアログ提示する）。`false`（ポーリング）は従来どおり。
+    @discardableResult
+    func checkForUpdate(interactive: Bool = false) async -> UpdateCheckOutcome {
         do {
             let release = try await service.fetchLatestRelease()
             latestReleaseTag = release.tagName
             guard VersionComparator.isNewer(tag: release.tagName, than: currentVersion) else {
                 availableUpdate = nil
-                return
+                return .upToDate
             }
             availableUpdate = release
             logger.info("Update available: \(release.tagName, privacy: .public) (current \(self.currentVersion, privacy: .public))")
 
-            guard store.lastNotifiedReleaseTag != release.tagName else { return }
-            store.lastNotifiedReleaseTag = release.tagName
-            let url = URL(string: release.htmlUrl) ?? URL(string: "https://github.com")!
-            notifier.send(title: "gitkun Update Available",
-                          body: "\(release.tagName) is available (current \(currentVersion))",
-                          url: url)
-            notifier.playSound(named: store.updateSoundName)
+            // 手動チェック時はダイアログで知らせるためバナーは出さない。
+            if !interactive, store.lastNotifiedReleaseTag != release.tagName {
+                store.lastNotifiedReleaseTag = release.tagName
+                let url = URL(string: release.htmlUrl) ?? URL(string: "https://github.com")!
+                notifier.send(title: "gitkun Update Available",
+                              body: "\(release.tagName) is available (current \(currentVersion))",
+                              url: url)
+                notifier.playSound(named: store.updateSoundName)
+            }
+            return .available(release)
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
+            return .failed(error)
         }
     }
 
