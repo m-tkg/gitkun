@@ -1,8 +1,8 @@
 import Foundation
 
-struct URLResolver {
+public struct URLResolver {
 
-    static func resolve(notification: GitHubNotification) -> URL {
+    public static func resolve(notification: GitHubNotification) -> URL {
         let fallback = URL(string: notification.repository.htmlUrl)!
 
         guard let apiURLString = notification.subject.url,

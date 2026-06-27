@@ -1,4 +1,5 @@
 import XCTest
+@testable import gitkunCore
 
 final class URLResolverTests: XCTestCase {
 

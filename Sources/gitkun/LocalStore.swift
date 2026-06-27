@@ -1,4 +1,5 @@
 import Foundation
+import gitkunCore
 
 final class LocalStore {
     static let shared = LocalStore()

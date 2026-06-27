@@ -5,7 +5,7 @@ import Foundation
 /// 「同じ PR / Issue なら同一」とみなす。すなわち `…/pull/{番号}` や `…/issues/{番号}` まで一致すれば、
 /// `/files`・`/commits` などのサブページや `#issuecomment-…` アンカー、クエリ違いでも同じとみなす。
 /// PR / Issue 以外の URL（リリースページ・コミット等）は末尾スラッシュのみ吸収したパス完全一致で比較する。
-enum GitHubTabMatcher {
+public enum GitHubTabMatcher {
 
     /// 番号で切り詰める対象のセグメント名。
     private static let numberedSegments: Set<String> = ["pull", "issues"]
@@ -14,7 +14,7 @@ enum GitHubTabMatcher {
     /// - host は小文字化、query / fragment は捨てる
     /// - パスに `pull`/`issues` の直後が数字のセグメントがあれば、その番号までで切り詰める
     /// - それ以外は末尾スラッシュを除いたパス全体
-    static func canonicalKey(_ url: URL) -> String {
+    public static func canonicalKey(_ url: URL) -> String {
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let host = (components?.host ?? "").lowercased()
         let path = components?.path ?? url.path
@@ -31,7 +31,7 @@ enum GitHubTabMatcher {
     }
 
     /// 2 つの URL が同じページを指すか。
-    static func matches(_ a: URL, _ b: URL) -> Bool {
+    public static func matches(_ a: URL, _ b: URL) -> Bool {
         canonicalKey(a) == canonicalKey(b)
     }
 }

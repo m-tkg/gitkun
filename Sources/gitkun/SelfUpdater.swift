@@ -1,4 +1,5 @@
 import AppKit
+import gitkunCore
 import OSLog
 
 private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "SelfUpdater")

@@ -3,12 +3,12 @@ import Foundation
 // MARK: - 共通 protocol
 
 /// `repository_url` を持つ Search API 由来の型に `owner/repo` を提供する。
-protocol RepositoryURLContaining {
+public protocol RepositoryURLContaining {
     var repositoryUrl: String { get }
 }
 
 extension RepositoryURLContaining {
-    var repositoryFullName: String {
+    public var repositoryFullName: String {
         // repositoryUrl: https://api.github.com/repos/{owner}/{repo}
         guard let url = URL(string: repositoryUrl) else { return "" }
         let parts = url.pathComponents
@@ -18,7 +18,7 @@ extension RepositoryURLContaining {
 }
 
 /// メニュー行と通知バナーで共通に使う表示プロパティ。
-protocol MenuRowDisplayable {
+public protocol MenuRowDisplayable {
     var repoFullName: String { get }
     var displayTitle: String { get }
     var updatedAtString: String { get }
@@ -27,27 +27,27 @@ protocol MenuRowDisplayable {
 
 // MARK: - 通知
 
-struct GitHubNotification: Decodable, Identifiable {
-    let id: String
-    let updatedAt: String
-    let reason: String
-    let subject: Subject
-    let repository: Repository
+public struct GitHubNotification: Decodable, Identifiable {
+    public let id: String
+    public let updatedAt: String
+    public let reason: String
+    public let subject: Subject
+    public let repository: Repository
 
-    struct Subject: Decodable {
-        let title: String
-        let url: String?
+    public struct Subject: Decodable {
+        public let title: String
+        public let url: String?
     }
 
-    struct Repository: Decodable {
-        let fullName: String
-        let htmlUrl: String
+    public struct Repository: Decodable {
+        public let fullName: String
+        public let htmlUrl: String
     }
 }
 
 /// `/notifications` の reason 値。UI 上でのグルーピング順と表示ラベルを持つ。
 /// 参考: https://docs.github.com/ja/rest/activity/notifications
-enum NotificationReason: String, CaseIterable {
+public enum NotificationReason: String, CaseIterable {
     case mention
     case reviewRequested = "review_requested"
     case approvalRequested = "approval_requested"
@@ -64,7 +64,7 @@ enum NotificationReason: String, CaseIterable {
     case invitation
     case memberFeatureRequested = "member_feature_requested"
 
-    var displayLabel: String {
+    public var displayLabel: String {
         switch self {
         case .mention:                return "Mentioned"
         case .reviewRequested:        return "Review Requested"
@@ -87,25 +87,49 @@ enum NotificationReason: String, CaseIterable {
 
 // MARK: - 未レビュー PR / Assigned Item
 
-struct UnreviewedPR: Decodable, Identifiable, RepositoryURLContaining {
-    let id: Int
-    let number: Int
-    let title: String
-    let htmlUrl: String
-    let repositoryUrl: String
-    let updatedAt: String
-    let draft: Bool
-    let labels: [Label]
+public struct UnreviewedPR: Decodable, Identifiable, RepositoryURLContaining {
+    public let id: Int
+    public let number: Int
+    public let title: String
+    public let htmlUrl: String
+    public let repositoryUrl: String
+    public let updatedAt: String
+    public let draft: Bool
+    public let labels: [Label]
 
-    struct Label: Decodable {
-        let name: String
+    public struct Label: Decodable {
+        public let name: String
+
+        public init(name: String) {
+            self.name = name
+        }
+    }
+
+    public init(
+        id: Int,
+        number: Int,
+        title: String,
+        htmlUrl: String,
+        repositoryUrl: String,
+        updatedAt: String,
+        draft: Bool,
+        labels: [Label]
+    ) {
+        self.id = id
+        self.number = number
+        self.title = title
+        self.htmlUrl = htmlUrl
+        self.repositoryUrl = repositoryUrl
+        self.updatedAt = updatedAt
+        self.draft = draft
+        self.labels = labels
     }
 
     /// review 待ちとして扱うか。以下は review 待ちと判定しない。
     /// - draft PR
     /// - タイトルが `[WIP]` で始まる（大文字小文字は区別しない）
     /// - `wip` ラベルが付いている（大文字小文字は区別しない）
-    var isReviewWaiting: Bool {
+    public var isReviewWaiting: Bool {
         if draft { return false }
         if title.lowercased().hasPrefix("[wip]") { return false }
         if labels.contains(where: { $0.name.lowercased() == "wip" }) { return false }
@@ -116,39 +140,57 @@ struct UnreviewedPR: Decodable, Identifiable, RepositoryURLContaining {
 /// 自分にアサインされている open な PR / Issue。
 /// `/search/issues?q=is:open+assignee:@me` のレスポンス。
 /// `pullRequest` フィールドが nil でなければ PR、nil なら Issue。
-struct AssignedItem: Decodable, Identifiable, RepositoryURLContaining {
-    let id: Int
-    let number: Int
-    let title: String
-    let htmlUrl: String
-    let repositoryUrl: String
-    let updatedAt: String
-    let pullRequest: PullRequestRef?
+public struct AssignedItem: Decodable, Identifiable, RepositoryURLContaining {
+    public let id: Int
+    public let number: Int
+    public let title: String
+    public let htmlUrl: String
+    public let repositoryUrl: String
+    public let updatedAt: String
+    public let pullRequest: PullRequestRef?
 
-    var isPullRequest: Bool { pullRequest != nil }
+    public var isPullRequest: Bool { pullRequest != nil }
 
-    struct PullRequestRef: Decodable {
-        let url: String?
+    public struct PullRequestRef: Decodable {
+        public let url: String?
+    }
+
+    public init(
+        id: Int,
+        number: Int,
+        title: String,
+        htmlUrl: String,
+        repositoryUrl: String,
+        updatedAt: String,
+        pullRequest: PullRequestRef?
+    ) {
+        self.id = id
+        self.number = number
+        self.title = title
+        self.htmlUrl = htmlUrl
+        self.repositoryUrl = repositoryUrl
+        self.updatedAt = updatedAt
+        self.pullRequest = pullRequest
     }
 }
 
 /// `/search/issues` 共通のレスポンス。
-struct SearchResponse<T: Decodable>: Decodable {
-    let items: [T]
+public struct SearchResponse<T: Decodable>: Decodable {
+    public let items: [T]
 }
 
 // MARK: - リリース（更新チェック）
 
 /// `/repos/{owner}/{repo}/releases/latest` のレスポンス（必要フィールドのみ）。
-struct ReleaseInfo: Decodable {
-    let tagName: String
-    let htmlUrl: String
+public struct ReleaseInfo: Decodable {
+    public let tagName: String
+    public let htmlUrl: String
 }
 
 /// `v` プレフィックス付きのタグと `CFBundleShortVersionString` を数値比較する。
-enum VersionComparator {
+public enum VersionComparator {
     /// `tag` が `current` より新しければ true。
-    static func isNewer(tag: String, than current: String) -> Bool {
+    public static func isNewer(tag: String, than current: String) -> Bool {
         let a = components(tag)
         let b = components(current)
         for i in 0..<max(a.count, b.count) {
@@ -175,29 +217,29 @@ enum VersionComparator {
 private let githubFallbackURL = URL(string: "https://github.com")!
 
 extension GitHubNotification: MenuRowDisplayable {
-    var repoFullName: String { repository.fullName }
-    var displayTitle: String { subject.title }
-    var updatedAtString: String { updatedAt }
-    var webURL: URL { URLResolver.resolve(notification: self) }
+    public var repoFullName: String { repository.fullName }
+    public var displayTitle: String { subject.title }
+    public var updatedAtString: String { updatedAt }
+    public var webURL: URL { URLResolver.resolve(notification: self) }
 }
 
 extension UnreviewedPR: MenuRowDisplayable {
-    var repoFullName: String { repositoryFullName }
-    var displayTitle: String { title }
-    var updatedAtString: String { updatedAt }
-    var webURL: URL { URL(string: htmlUrl) ?? githubFallbackURL }
+    public var repoFullName: String { repositoryFullName }
+    public var displayTitle: String { title }
+    public var updatedAtString: String { updatedAt }
+    public var webURL: URL { URL(string: htmlUrl) ?? githubFallbackURL }
 }
 
 extension AssignedItem: MenuRowDisplayable {
-    var repoFullName: String { repositoryFullName }
-    var displayTitle: String { title }
-    var updatedAtString: String { updatedAt }
-    var webURL: URL { URL(string: htmlUrl) ?? githubFallbackURL }
+    public var repoFullName: String { repositoryFullName }
+    public var displayTitle: String { title }
+    public var updatedAtString: String { updatedAt }
+    public var webURL: URL { URL(string: htmlUrl) ?? githubFallbackURL }
 }
 
 // MARK: - 設定・ステータス
 
-enum PollingInterval: Int {
+public enum PollingInterval: Int {
     case sec15 = 15
     case sec30 = 30
     case sec60 = 60
@@ -205,20 +247,20 @@ enum PollingInterval: Int {
     case sec300 = 300
 }
 
-enum AppStatus {
+public enum AppStatus {
     case idle
     case loading
     case ok
     case error(String)
 }
 
-enum AppError: Error, LocalizedError {
+public enum AppError: Error, LocalizedError {
     case ghNotFound
     case authRequired
     case fetchFailed(String)
     case parseError(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .ghNotFound:           return "gh not found"
         case .authRequired:         return "auth required"
@@ -227,7 +269,7 @@ enum AppError: Error, LocalizedError {
         }
     }
 
-    var statusLabel: String {
+    public var statusLabel: String {
         switch self {
         case .ghNotFound:   return "gh not found"
         case .authRequired: return "auth required"

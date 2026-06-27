@@ -1,4 +1,5 @@
 import Foundation
+import gitkunCore
 import Combine
 import OSLog
 

@@ -1,4 +1,5 @@
 import AppKit
+import gitkunCore
 import Combine
 import OSLog
 import SwiftUI
