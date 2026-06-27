@@ -17,11 +17,9 @@ jobs:
       - name: Resolve version
         id: ver
         run: |
-          V=$(grep -m1 'MARKETING_VERSION' gitkun.xcodeproj/project.pbxproj \
-              | sed -E 's/.*MARKETING_VERSION[[:space:]]*=[[:space:]]*//; s/;.*//' \
-              | tr -d ' "')
+          V=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Resources/Info.plist 2>/dev/null | tr -d ' ')
           if [ -z "$V" ]; then
-            echo "MARKETING_VERSION not found in project.pbxproj" >&2
+            echo "CFBundleShortVersionString not found in Resources/Info.plist" >&2
             exit 1
           fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
@@ -65,6 +63,7 @@ jobs:
           fi
 
       # 署名証明書を一時キーチェーンに取り込む（安定署名で TCC 権限をアップデート越しに保持）。
+      # bundle.sh の codesign がこのキーチェーンの Developer ID identity を使う。
       - name: Import signing certificate
         if: steps.signing.outputs.present == 'true'
         env:
@@ -84,26 +83,24 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
           echo "SIGN_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
 
+      # bundle.sh が swift build → .app 手組み → codesign まで行う。
+      # SIGN_IDENTITY が空（シークレット未設定）なら ad-hoc 署名にフォールバックする。
+      # どちらの分岐でも --entitlements で apple-events を付与する。
       - name: Build Release
         if: steps.check.outputs.exists == 'false'
-        run: make release
-
-      # Developer ID で署名し直す（Hardened Runtime + セキュアタイムスタンプ = notarization の要件）。
-      # make release は ad-hoc 署名のため、署名シークレットがあるときだけ上書き署名する。
-      # entitlements を渡さない再署名により get-task-allow が外れ、公証可能になる。
-      - name: Sign with Developer ID
-        if: steps.signing.outputs.present == 'true'
         env:
           SIGN_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+        run: bash Scripts/bundle.sh release
+
+      # 署名と apple-events entitlement の回帰検証（ad-hoc / Developer ID 共通）。
+      - name: Verify signing and entitlements
+        if: steps.check.outputs.exists == 'false'
         run: |
-          APP=.build/Build/Products/Release/gitkun.app
-          # --entitlements を渡さないと apple-events entitlement が剥がれるため必ず指定する。
-          codesign --force --deep --options runtime --timestamp \
-            --entitlements gitkun/gitkun.entitlements \
-            --sign "$SIGN_IDENTITY" "$APP"
+          APP="gitkun.app"
           codesign --verify --deep --strict --verbose=2 "$APP"
           codesign -d --entitlements - --xml "$APP" | grep -q "com.apple.security.automation.apple-events" \
-            && echo "apple-events entitlement: OK"
+            && echo "apple-events entitlement: OK" \
+            || { echo "apple-events entitlement: MISSING" >&2; exit 1; }
 
       # Developer ID 署名済みアプリを公証し、チケットを .app に staple する。
       - name: Notarize and staple
@@ -113,7 +110,7 @@ jobs:
           NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
           NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
         run: |
-          APP=.build/Build/Products/Release/gitkun.app
+          APP="gitkun.app"
           # 公証は zip を提出する（.app をそのまま提出できないため）
           ditto -c -k --keepParent "$APP" notarize.zip
           xcrun notarytool submit notarize.zip \
@@ -127,8 +124,7 @@ jobs:
 
       - name: Create zip
         if: steps.check.outputs.exists == 'false'
-        working-directory: .build/Build/Products/Release
-        run: zip -ry "$GITHUB_WORKSPACE/gitkun.zip" gitkun.app
+        run: zip -ry gitkun.zip "gitkun.app"
 
       - name: Create tag and release
         if: steps.check.outputs.exists == 'false'
