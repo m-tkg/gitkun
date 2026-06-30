@@ -18,7 +18,7 @@
     <string>APPL</string>
     <!-- バージョンの真実。release.yml はここを読んで v<version> タグを決める。 -->
     <key>CFBundleShortVersionString</key>
-    <string>1.12.0</string>
+    <string>1.12.1</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>NSPrincipalClass</key>

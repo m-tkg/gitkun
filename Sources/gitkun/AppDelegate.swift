@@ -185,7 +185,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildGroupedNotificationItems(into menu: NSMenu) {
         // reason を集約カテゴリ（Review Requested / Mentioned / Commented / State Changed /
         // Authored）+ その他個別 reason にまとめ、表示順に並べる（純ロジックは gitkunCore）。
-        let groups = NotificationGrouping.grouped(appState.notifications) { $0.reason }
+        // 現在レビュー依頼中でない review_requested 通知は Commented へ寄せる（effectiveReason）。
+        let activeReviewKeys = appState.activeReviewKeys
+        let groups = NotificationGrouping.grouped(appState.notifications) {
+            NotificationGrouping.effectiveReason(
+                reason: $0.reason,
+                pullRequestKey: $0.pullRequestKey,
+                activeReviewKeys: activeReviewKeys
+            )
+        }
 
         for group in groups {
             // 通知はクリックでブラウザを開いた後に refresh する。
