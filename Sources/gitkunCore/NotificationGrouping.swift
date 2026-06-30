@@ -75,6 +75,28 @@ public enum NotificationGrouping {
         return sortedLabels.map { Group(label: $0, items: itemsByLabel[$0]!) }
     }
 
+    /// 表示グループ判定に使う「実効 reason」を返す。
+    ///
+    /// GitHub は一度レビュー依頼された PR の更新を、その後コメントが付いても
+    /// `reason=review_requested` のまま通知し続ける。そこで、現在も自分にレビュー依頼が
+    /// 立っている PR（`activeReviewKeys`）に含まれない `review_requested` 通知は `comment`
+    /// 扱いに補正し、Commented グループへ寄せる。
+    ///
+    /// - Parameters:
+    ///   - activeReviewKeys: 現在レビュー依頼中の PR キー集合（`owner/repo#n`）。
+    ///     未取得・取得失敗時は nil を渡す（その場合は補正しない＝誤って comment に落とさない）。
+    public static func effectiveReason(reason: String,
+                                       pullRequestKey: String?,
+                                       activeReviewKeys: Set<String>?) -> String {
+        guard reason == "review_requested",
+              let active = activeReviewKeys,
+              let key = pullRequestKey,
+              !active.contains(key) else {
+            return reason
+        }
+        return "comment"
+    }
+
     /// `reason` を (表示ラベル, ソートキー) に対応づける。
     private static func labelAndSortKey(forReason reason: String) -> (label: String, key: (primary: Int, secondary: String)) {
         if let category = NotificationCategory(reason: reason),

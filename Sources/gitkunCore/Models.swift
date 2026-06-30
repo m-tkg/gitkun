@@ -159,6 +159,9 @@ public struct UnreviewedPR: Decodable, Identifiable, RepositoryURLContaining {
         self.labels = labels
     }
 
+    /// `owner/repo#number` 形式のキー。通知の `pullRequestKey` と突き合わせる。
+    public var prKey: String { "\(repositoryFullName)#\(number)" }
+
     /// review 待ちとして扱うか。以下は review 待ちと判定しない。
     /// - draft PR
     /// - タイトルが `[WIP]` で始まる（大文字小文字は区別しない）
@@ -255,6 +258,20 @@ extension GitHubNotification {
     public var subjectTypeLabel: String? {
         guard let raw = subject.type else { return nil }
         return NotificationSubjectType(rawValue: raw)?.displayLabel ?? raw
+    }
+
+    /// `subject.url` が PR（`.../pulls/{n}`）を指すとき `owner/repo#n` を返す。それ以外は nil。
+    /// レビュー依頼の再分類で `UnreviewedPR.prKey` と突き合わせるためのキー。
+    public var pullRequestKey: String? {
+        guard let urlString = subject.url,
+              let url = URL(string: urlString) else { return nil }
+        let parts = url.pathComponents
+        // [..., "repos", owner, repo, "pulls", number]
+        guard parts.count >= 5, parts[parts.count - 2] == "pulls" else { return nil }
+        let number = parts[parts.count - 1]
+        let repo = parts[parts.count - 3]
+        let owner = parts[parts.count - 4]
+        return "\(owner)/\(repo)#\(number)"
     }
 }
 

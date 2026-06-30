@@ -12,6 +12,9 @@ final class AppState: ObservableObject {
 
     @Published var notifications: [GitHubNotification] = []
     @Published var unreviewedPRs: [UnreviewedPR] = []
+    /// 現在レビュー依頼中の PR キー集合（`owner/repo#n`、WIP フィルタ前の生 search 結果由来）。
+    /// `review_requested` 通知の再分類に使う。未取得・取得失敗時は nil（補正しない）。
+    @Published var activeReviewKeys: Set<String>? = nil
     @Published var myPRs: [AssignedItem] = []
     @Published var assignedIssues: [AssignedItem] = []
     @Published var status: AppStatus = .idle
@@ -182,6 +185,10 @@ final class AppState: ObservableObject {
     }
 
     private func handleFetchedUnreviewedPRs(_ fetched: [UnreviewedPR], isFirstFetch: Bool) {
+        // 通知の review_requested 再分類用に、フィルタ前の全件からキー集合を作る
+        // （WIP・上限の影響を受けない「現在依頼中」の正確な集合）。
+        activeReviewKeys = Set(fetched.map(\.prKey))
+
         // draft / タイトル先頭 [WIP] / wip ラベルの除外（設定で ON/OFF、デフォルト ON）
         let fetched = store.excludeWIP ? fetched.filter(\.isReviewWaiting) : fetched
         let (newOnes, nextKnown) = FetchDiff.newItems(fetched: fetched, known: store.knownUnreviewedIDs)
