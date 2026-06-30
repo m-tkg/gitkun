@@ -6,6 +6,7 @@ final class NotificationMenuItemView: NSView {
     private static let itemHeight: CGFloat = 52
 
     private let repoFullName: String
+    private let detail: String?
     private let title: String
     private let updatedAt: String
     private let dotColor: NSColor
@@ -16,8 +17,10 @@ final class NotificationMenuItemView: NSView {
          title: String,
          updatedAt: String,
          dotColor: NSColor = .systemGreen,
+         detail: String? = nil,
          onOpen: @escaping () -> Void) {
         self.repoFullName = repoFullName
+        self.detail = detail
         self.title = title
         self.updatedAt = updatedAt
         self.dotColor = dotColor
@@ -50,9 +53,11 @@ final class NotificationMenuItemView: NSView {
         let textX = pad + dotSize + 8
         let textW = Self.itemWidth - textX - pad
 
-        // リポジトリ名（上段）
-        let repo = makeLabel(repoFullName,
+        // リポジトリ名（上段）。種別があれば "owner/repo · Pull Request" の形で添える。
+        let repoText = detail.map { "\(repoFullName) · \($0)" } ?? repoFullName
+        let repo = makeLabel(repoText,
                              size: 11, color: .secondaryLabelColor)
+        repo.lineBreakMode = .byTruncatingTail
         repo.frame = NSRect(x: textX, y: 32, width: textW, height: 14)
         addSubview(repo)
 

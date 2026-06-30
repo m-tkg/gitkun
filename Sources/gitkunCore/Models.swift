@@ -23,6 +23,12 @@ public protocol MenuRowDisplayable {
     var displayTitle: String { get }
     var updatedAtString: String { get }
     var webURL: URL { get }
+    /// リポジトリ名の右に添える補助情報（通知の種別など）。なければ nil。
+    var rowDetail: String? { get }
+}
+
+extension MenuRowDisplayable {
+    public var rowDetail: String? { nil }
 }
 
 // MARK: - 通知
@@ -37,6 +43,14 @@ public struct GitHubNotification: Decodable, Identifiable {
     public struct Subject: Decodable {
         public let title: String
         public let url: String?
+        /// 通知対象のリソース種別（`PullRequest` / `Issue` / `Commit` / `Release` / `Discussion` …）。
+        public let type: String?
+
+        public init(title: String, url: String?, type: String? = nil) {
+            self.title = title
+            self.url = url
+            self.type = type
+        }
     }
 
     public struct Repository: Decodable {
@@ -81,6 +95,26 @@ public enum NotificationReason: String, CaseIterable {
         case .manual:                 return "Manual"
         case .invitation:             return "Invitation"
         case .memberFeatureRequested: return "Member Feature Requested"
+        }
+    }
+}
+
+/// `/notifications` の `subject.type` 値。通知行に種別を表示するために使う。
+/// 未知・nil は表示しない（補助情報なので欠落しても破綻させない）。
+public enum NotificationSubjectType: String {
+    case pullRequest = "PullRequest"
+    case issue = "Issue"
+    case commit = "Commit"
+    case release = "Release"
+    case discussion = "Discussion"
+
+    public var displayLabel: String {
+        switch self {
+        case .pullRequest: return "Pull Request"
+        case .issue:       return "Issue"
+        case .commit:      return "Commit"
+        case .release:     return "Release"
+        case .discussion:  return "Discussion"
         }
     }
 }
@@ -216,11 +250,20 @@ public enum VersionComparator {
 
 private let githubFallbackURL = URL(string: "https://github.com")!
 
+extension GitHubNotification {
+    /// `subject.type` を表示用ラベルに正規化する。未知 raw 値はそのまま、nil は nil。
+    public var subjectTypeLabel: String? {
+        guard let raw = subject.type else { return nil }
+        return NotificationSubjectType(rawValue: raw)?.displayLabel ?? raw
+    }
+}
+
 extension GitHubNotification: MenuRowDisplayable {
     public var repoFullName: String { repository.fullName }
     public var displayTitle: String { subject.title }
     public var updatedAtString: String { updatedAt }
     public var webURL: URL { URLResolver.resolve(notification: self) }
+    public var rowDetail: String? { subjectTypeLabel }
 }
 
 extension UnreviewedPR: MenuRowDisplayable {

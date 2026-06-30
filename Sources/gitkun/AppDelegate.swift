@@ -169,7 +169,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     repoFullName: item.repoFullName,
                     title: item.displayTitle,
                     updatedAt: item.updatedAtString,
-                    dotColor: dotColor
+                    dotColor: dotColor,
+                    detail: item.rowDetail
                 ) {
                     BrowserTabOpener.open(item.webURL)
                     onClick(item)
@@ -182,23 +183,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func buildGroupedNotificationItems(into menu: NSMenu) {
-        let grouped = Dictionary(grouping: appState.notifications, by: \.reason)
+        // reason を集約カテゴリ（Review Requested / Mentioned / Commented / State Changed /
+        // Authored）+ その他個別 reason にまとめ、表示順に並べる（純ロジックは gitkunCore）。
+        let groups = NotificationGrouping.grouped(appState.notifications) { $0.reason }
 
-        // 固定優先順 → 未知 reason はアルファベット順で末尾
-        var orderedKeys = NotificationReason.allCases
-            .map(\.rawValue)
-            .filter { grouped[$0] != nil }
-        let known = Set(NotificationReason.allCases.map(\.rawValue))
-        orderedKeys.append(contentsOf: grouped.keys.filter { !known.contains($0) }.sorted())
-
-        for key in orderedKeys {
-            guard let items = grouped[key], !items.isEmpty else { continue }
-            let label = NotificationReason(rawValue: key)?.displayLabel ?? key
+        for group in groups {
             // 通知はクリックでブラウザを開いた後に refresh する。
             // GitHub 側で既読になった通知が次フェッチで一覧から消える。
             addSubmenu(into: menu,
-                       title: label,
-                       items: items,
+                       title: group.label,
+                       items: group.items,
                        emptyTitle: "",
                        dotColor: .systemGreen) { [weak self] _ in
                 self?.appState.fetchNow()
