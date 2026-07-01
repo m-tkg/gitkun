@@ -362,7 +362,7 @@ Quit
 
 ### reason グルーピング優先順
 
-`Models.swift` の `NotificationReason` 宣言順が優先度（小さいほど上）。
+`GitHubNotification.swift` の `NotificationReason` 宣言順が優先度（小さいほど上）。
 現在の順:
 `mention` → `review_requested` → `approval_requested` → `assign` → `author` → `comment` → `state_change` → `ci_activity` → `push` → `team_mention` → `security_alert` → `subscribed` → `manual` → `invitation` → `member_feature_requested`。
 GitHub が新しい reason を追加した場合は「その他」として末尾にアルファベット順で出る。
@@ -421,7 +421,7 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
 | `SettingsView.swift` | 設定の SwiftUI ビュー（通知音 3 種（N/A で個別ミュート）・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
-| `Models.swift` | データモデル・enum 定義（`GitHubNotification`, `UnreviewedPR`, `AssignedItem`, `ReleaseInfo`, `VersionComparator` 等） |
+| `GitHubNotification.swift` / `SearchModels.swift` / `ReleaseInfo.swift` / `VersionComparator.swift` / `AppStatus.swift` / `AppError.swift` / `MenuRowDisplayable.swift` | データモデル・enum 定義（`Models.swift` を関心別に分割済み。通知 / 検索結果（`UnreviewedPR`, `AssignedItem`） / リリース情報 / バージョン比較 / ステータス / エラー / メニュー行表示 protocol） |
 
 ---
 
@@ -444,7 +444,9 @@ gitkun/
 │   └── MenuBarIconUnreadAndUnreview.png # 両方あり（色付き、32px）
 ├── Sources/
 │   ├── gitkunCore/          # 純粋ロジック（テスト対象、AppKit 非依存）
-│   │   ├── Models.swift  URLResolver.swift  FetchDiff.swift  GitHubTabMatcher.swift
+│   │   ├── GitHubNotification.swift  SearchModels.swift  ReleaseInfo.swift  VersionComparator.swift
+│   │   ├── AppStatus.swift  AppError.swift  MenuRowDisplayable.swift
+│   │   ├── URLResolver.swift  FetchDiff.swift  GitHubTabMatcher.swift
 │   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine 依存）
 │       └── *.swift
 └── Tests/
@@ -454,7 +456,7 @@ gitkun/
 
 ### テスト
 
-- テスト対象は `gitkunCore` ターゲットの純粋ロジック（`Models.swift`・`URLResolver.swift`・`FetchDiff.swift`・`GitHubTabMatcher.swift`）。テストは `@testable import gitkunCore` でアクセスする
+- テスト対象は `gitkunCore` ターゲットの純粋ロジック（`GitHubNotification.swift`・`SearchModels.swift`・`ReleaseInfo.swift`・`VersionComparator.swift`・`AppStatus.swift`・`AppError.swift`・`MenuRowDisplayable.swift`・`URLResolver.swift`・`FetchDiff.swift`・`GitHubTabMatcher.swift`）。テストは `@testable import gitkunCore` でアクセスする
   - アプリ（`gitkun` ターゲット）を起動しないため、テスト実行時に GitHub ポーリングや通知権限ダイアログが発生しない
   - 新たにテスト対象のロジックを増やす場合は、AppKit 非依存なら `Sources/gitkunCore/` に置く。app から使う型は `public` 化する（テストは `@testable` なので internal でも見える）
 - 実行は `swift test`
