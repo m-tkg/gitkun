@@ -82,10 +82,8 @@ final class AppState: ObservableObject {
     /// 最新リリースを取得し、自バージョンより新しければ `availableUpdate` を更新する。
     /// 更新があってもバナー通知は出さない（メニューの `⬆ Update to …` 項目で知らせる）。
     /// 補助機能のため、失敗時はログのみでステータスには影響させない。
-    /// - Parameter interactive: メニューからの手動チェック。結果を戻り値で返し、呼び出し側が
-    ///   ダイアログ提示する。`false`（ポーリング）はメニュー項目の更新のみ。
     @discardableResult
-    func checkForUpdate(interactive: Bool = false) async -> UpdateCheckOutcome {
+    func checkForUpdate() async -> UpdateCheckOutcome {
         do {
             let release = try await service.fetchLatestRelease()
             latestReleaseTag = release.tagName

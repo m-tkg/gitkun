@@ -41,12 +41,11 @@ final class MyPRsMergeTests: XCTestCase {
                           updatedAt: String = "2026-01-01T00:00:00Z") -> AssignedItem {
         AssignedItem(
             id: id,
-            number: id,
             title: title ?? "item\(id)",
             htmlUrl: "https://github.com/o/r/pull/\(id)",
             repositoryUrl: "https://api.github.com/repos/o/r",
             updatedAt: updatedAt,
-            pullRequest: isPR ? .init(url: nil) : nil
+            pullRequest: isPR ? .init() : nil
         )
     }
 

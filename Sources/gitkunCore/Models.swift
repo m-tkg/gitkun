@@ -179,7 +179,6 @@ public struct UnreviewedPR: Decodable, Identifiable, RepositoryURLContaining {
 /// `pullRequest` フィールドが nil でなければ PR、nil なら Issue。
 public struct AssignedItem: Decodable, Identifiable, RepositoryURLContaining {
     public let id: Int
-    public let number: Int
     public let title: String
     public let htmlUrl: String
     public let repositoryUrl: String
@@ -189,12 +188,11 @@ public struct AssignedItem: Decodable, Identifiable, RepositoryURLContaining {
     public var isPullRequest: Bool { pullRequest != nil }
 
     public struct PullRequestRef: Decodable {
-        public let url: String?
+        public init() {}
     }
 
     public init(
         id: Int,
-        number: Int,
         title: String,
         htmlUrl: String,
         repositoryUrl: String,
@@ -202,7 +200,6 @@ public struct AssignedItem: Decodable, Identifiable, RepositoryURLContaining {
         pullRequest: PullRequestRef?
     ) {
         self.id = id
-        self.number = number
         self.title = title
         self.htmlUrl = htmlUrl
         self.repositoryUrl = repositoryUrl
