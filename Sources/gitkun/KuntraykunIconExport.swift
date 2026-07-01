@@ -10,10 +10,7 @@ enum KuntraykunIconExport {
     private static let sharedDirRelativePath = "Kuntraykun/MenuBarIcons"
 
     /// `.local` を除いた基底 bundle ID。
-    private static var baseBundleID: String {
-        let raw = Bundle.main.bundleIdentifier ?? ""
-        return raw.hasSuffix(".local") ? String(raw.dropLast(".local".count)) : raw
-    }
+    private static var baseBundleID: String { Bundle.main.baseBundleIdentifier }
 
     private static var dir: URL? {
         guard let base = FileManager.default

@@ -408,6 +408,7 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 |---|---|
 | `gitkunApp.swift` | `@main`、`NSApplicationDelegateAdaptor`、二重起動防止 |
 | `AppDelegate.swift` | `NSStatusItem` 管理、`NSMenu` 構築、アイコン切り替え（Combine） |
+| `KuntraykunBridge.swift` | kuntraykun 連携ブリッジ（`sync`/`showMenu` 分散通知の観測、アイコン表示/非表示の判定） |
 | `AppState.swift` | `@MainActor ObservableObject`、状態管理、フェッチのオーケストレーション、通知発火（差分判定・マージは `FetchDiff` に委譲） |
 | `FetchDiff.swift` | 差分判定・My PRs マージの純関数（テスト対象） |
 | `GitHubNotificationService.swift` | `actor`、`gh` CLI 実行、トークンキャッシュ、通知・未レビュー PR・assignee 検索・author 検索・リリース取得のフェッチ |
@@ -489,8 +490,7 @@ gitkun/
 ## Kuntraykun 連携（実装済み）
 
 本アプリは kuntraykun（`com.mtkg.kuntraykun`）にメニューバーアイコンを集約させる連携に対応している。
-- 実装: `Sources/gitkun/AppDelegate.swift` に `KuntraykunBridge` を同梱（whisperkun / snapperkun と同じく
-  同ファイル内に置く）。`applicationDidFinishLaunching` で
+- 実装: `Sources/gitkun/KuntraykunBridge.swift` の `KuntraykunBridge`。`AppDelegate.applicationDidFinishLaunching` で
   `bridge.start()` を配線し、`setHidden` は `statusItem.isVisible`、`popUpMenu` は `statusItem.menu?.popUp` に委譲する。
 - 分散通知 `sync`/`showMenu` を観測し、起動時に `appLaunched` を送信。管理対象 かつ kuntraykun 起動中なら
   自分のアイコンを隠し、`showMenu` で自分のメニューを指定座標に `popUp` する（未起動ならフォールバック表示）。
