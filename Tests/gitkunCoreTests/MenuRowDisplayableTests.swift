@@ -20,7 +20,6 @@ final class MenuRowDisplayableTests: XCTestCase {
     private func makeAssignedItem(htmlUrl: String) -> AssignedItem {
         AssignedItem(
             id: 1,
-            number: 10,
             title: "item",
             htmlUrl: htmlUrl,
             repositoryUrl: "https://api.github.com/repos/owner/repo",

@@ -14,7 +14,7 @@ public enum GitHubTabMatcher {
     /// - host は小文字化、query / fragment は捨てる
     /// - パスに `pull`/`issues` の直後が数字のセグメントがあれば、その番号までで切り詰める
     /// - それ以外は末尾スラッシュを除いたパス全体
-    public static func canonicalKey(_ url: URL) -> String {
+    static func canonicalKey(_ url: URL) -> String {
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let host = (components?.host ?? "").lowercased()
         let path = components?.path ?? url.path

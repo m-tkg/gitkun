@@ -269,7 +269,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// メニューからの手動更新チェック。結果をダイアログで提示する。
     @objc private func checkForUpdate() {
         Task { @MainActor in
-            switch await appState.checkForUpdate(interactive: true) {
+            switch await appState.checkForUpdate() {
             case .available(let release):
                 promptInstall(release)
             case .upToDate:
