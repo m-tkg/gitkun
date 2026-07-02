@@ -1,103 +1,158 @@
 # gitkun
 
-macOS のメニューバーに常駐し、GitHub の未読通知を定期的にチェックする軽量アプリ。
+macOS のメニューバーに常駐し、GitHub の未読通知と「自分にレビュー依頼が来ている未マージ PR」を
+定期的にチェックする個人用の軽量ユーティリティ。加えて、自分が assignee / author の open PR
+（My PRs）と、自分にアサインされている open Issue（Assigned Issues）もメニューから参照できる。
 
-- 未読通知があるとアイコンが切り替わる
-- 新規未読が増えると macOS 通知バナー + サウンドで通知
-- 通知クリックでブラウザが開く
+- 未読通知・未レビュー PR の有無に応じてメニューバーアイコンが4通りに切り替わる
+- 新規の未読通知・新規レビュー依頼があれば macOS 通知バナー + サウンドで知らせる（My PRs /
+  Assigned Issues は通知しない）
+- メニュー項目クリックでブラウザが開く。既定ブラウザが Safari / Chrome 系なら、同じ PR / Issue を
+  表示している既存タブがあればそれをアクティブにする（新規タブを増やさない）
+- draft PR・タイトル先頭 `[WIP]`・`wip` ラベルの PR は Review Requests から除外（設定で ON/OFF 可）
+- 約1時間ごとに自リポジトリの最新リリースを確認し、新バージョンがあればメニューから自己更新できる
 
-## 前提条件
+## 動作要件
 
 - macOS 13 Ventura 以降
-- Swift toolchain（`swift build` / `swift test`。Xcode 本体は不要、Command Line Tools で可）
-- [gh CLI](https://cli.github.com/)
+- Swift toolchain（`swift build` / `swift test` が使えること。Xcode 本体は不要、Command Line
+  Tools があれば良い）
+- [gh CLI](https://cli.github.com/) がインストール済み・ログイン済みであること
 
 ```bash
 brew install gh
 gh auth login
 ```
 
-## ビルド
+## インストール
+
+### リリース版を使う（推奨）
+
+1. [Releases](https://github.com/m-tkg/gitkun/releases) から最新の `gitkun.zip` をダウンロードして展開
+2. `gitkun.app` を `/Applications` へコピーして起動
+3. 初回起動時に通知の許可ダイアログが出たら「許可」を選択
+4. ブラウザの既存タブ再利用機能を使う場合、システム設定 > プライバシーとセキュリティ >
+   オートメーション で Safari / Chrome 系ブラウザの制御を許可する
+
+配布版は Developer ID 署名 + 公証済み（詳細は [`docs/SIGNING.md`](docs/SIGNING.md)）。
+
+### ソースからビルドする
 
 Xcode は使わず Swift Package Manager + `Scripts/bundle.sh` でビルドする。
 
 ```bash
 swift build                       # ビルド（Debug）
-swift test                        # ユニットテスト
+swift test                        # ユニットテスト（gitkunCoreTests）
 bash Scripts/bundle.sh release    # .app を組み立て（Release・ad-hoc 署名）
-
-# ローカル検証用（本番と権限を分けた「gitkun (Local)」を生成して起動）
-LOCAL=1 bash Scripts/bundle.sh debug && open "gitkun (Local).app"
+open gitkun.app
 ```
 
-## インストール
+## メニュー構成
 
-1. `bash Scripts/bundle.sh release` で `gitkun.app`（リポジトリ直下）をビルド
-2. `gitkun.app` を `/Applications` へコピー
-3. 初回起動時に通知の許可ダイアログが表示されたら「許可」を選択
-
-## リリース手順
-
-バージョンは `Resources/Info.plist` の `CFBundleShortVersionString`（3桁 semver、例 `1.2.0`）を唯一の源とする。アプリが表示するバージョンもこの値を参照する。
-
-リリースは GitHub Actions（`.github/workflows/release.yml`）が **main への push または手動実行（Run workflow）をトリガー**に動き、現在の `CFBundleShortVersionString` を読み取って `v<version>` のリリースがまだ無ければ、`bundle.sh` でビルド → `gitkun.app` を zip 化 → タグ作成 → GitHub Releases へバイナリ添付までを自動で行う。
+クリックするとメニューバーアイコンからメニューが開く。通知は `reason` を集約カテゴリ
+（Review Requested / Mentioned / Commented / State Changed / Authored など）ごとにサブメニュー化し、
+それ以外のセクションも件数付きのサブメニューで一覧を表示する。
 
 ```
-1. PR で CFBundleShortVersionString を上げる（例 1.2.0）
-2. main にマージ → 自動で v1.2.0 がタグ付けされ、gitkun.zip 付きで公開される
-```
-
-- バージョン未変更の main push は「既存リリースあり」としてスキップされる（安全）
-- 手動で出したいときは Actions の **Release → Run workflow**
-- タグは CI が自動作成するため、手で `git tag` / `gh release create` する必要はない
-
-## 使い方
-
-起動するとメニューバーにアイコンが表示される。
-
-| アイコン | 状態 |
-|---|---|
-| 通常アイコン | 未読なし |
-| 通知アイコン | 未読あり |
-
-クリックするとメニューが開く。
-
-```
-GitHub Notifications
+gitkun v1.12.1                    ← 現在バージョン（操作不可）
 ────────────────────
-● owner/repo
-  PR タイトル
-  5m ago
+Review Requested (1) ▶            ← 通知カテゴリ（サブメニュー）
+Mentioned (2) ▶
+Commented (3) ▶
+...
 ────────────────────
-Status ▶
+Review Requests (N) ▶             ← レビュー依頼中の PR
+My PRs (N) ▶                      ← assignee:@me + author:@me
+Assigned Issues (N) ▶             ← assignee:@me の Issue
+────────────────────
+Status ▶                          ← サブメニュー
   Status: OK
-  Unread: 1
+  Version: 1.12.1
+  Unread: 2
+  Review requests: 1
+  My PRs: 3
+  Assigned issues: 1
   Last checked: 23:45
 ────────────────────
-Refresh
-Launch at login: OFF
+Refresh                           ← 手動更新（フェッチ中は無効）
+Check for Updates…                ← 更新があれば "⬆ Update to vX.Y.Z…" に切り替わる
+Settings…                         ← 設定ウィンドウを開く（⌘,）
 ────────────────────
-Quit
+Quit                              ← ⌘Q
 ```
 
-- **通知行クリック** — ブラウザで該当ページを開き、リストから削除
-- **Status** — サブメニューで詳細ステータスを確認
-- **Refresh** — 手動で即時更新（フェッチ中は無効）
-- **Launch at login** — ログイン時の自動起動を ON/OFF
+各サブメニューの行はリポジトリ名・タイトル・相対時刻を表示し、クリックでブラウザに該当ページを
+開く（通知だけはクリック時に refresh も実行される）。一覧からの即時削除はせず、次回ポーリング
+または Refresh で更新される。
 
-## アーキテクチャ
+## 設定
+
+メニューの `Settings…` から以下を変更できる（`AppState` / `LocalStore` が `UserDefaults` を共有）。
+
+- 未読通知・レビュー依頼それぞれの通知音（先頭の `N/A` を選ぶとそのイベントの音だけ鳴らさない）
+- draft / WIP PR を Review Requests から除外するか（デフォルト ON）
+- Launch at login（ログイン時の自動起動）
+
+ポーリング間隔（デフォルト30秒）は UI 未実装で、`UserDefaults` の `pollingInterval` キーを直接
+変更する必要がある。
+
+## 開発
+
+```bash
+swift build                                   # ビルド（Debug）
+swift test                                    # ユニットテスト
+bash Scripts/bundle.sh release                # .app を組み立て（Release・ad-hoc 署名）
+
+# ローカル検証用（本番と TCC 権限を分離した「gitkun (Local)」を生成して起動）
+pkill -x gitkun 2>/dev/null; LOCAL=1 bash Scripts/bundle.sh debug && open "gitkun (Local).app"
+
+swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"  # 成果物削除
+```
+
+テスト対象は `Sources/gitkunCore/`（AppKit 非依存の純粋ロジック）のみ。`Sources/gitkun/`
+（AppKit・Combine・SwiftUI に依存する実行ファイル本体）はテストから除外されており、`swift test`
+実行時に GitHub ポーリングや通知許可ダイアログは発生しない。
+
+ブランチ運用・リリース手順・署名/公証の詳細は [`CLAUDE.md`](CLAUDE.md) を参照。
+
+## アーキテクチャ概要
 
 ```
-gitkunApp.swift               @main、二重起動防止
-AppDelegate.swift             NSStatusItem 管理、NSMenu 構築、アイコン切り替え
-├── AppState.swift            状態管理・差分判定・通知発火
-├── GitHubNotificationService.swift  gh CLI 実行（actor、トークンキャッシュ）
-├── NotificationPoller.swift  タイマーポーリング
-├── LocalStore.swift          UserDefaults ラッパー
-├── UserNotifier.swift        UNUserNotificationCenter
+Sources/gitkunCore/     純粋ロジック（gitkun ターゲットからも Tests からも参照）
+├── AppError.swift              エラー種別
+├── AppStatus.swift             ステータス種別・ポーリング間隔ポリシー
+├── FetchDiff.swift             新規差分判定・My PRs マージ
+├── FetchErrors.swift           複数フェッチのエラー集約
+├── GitHubNotification.swift    通知モデル・reason/subject.type 定義
+├── GitHubTabMatcher.swift      ブラウザ既存タブの URL 同一判定
+├── MenuBarIcon.swift           未読/未レビューからアイコン名を導出
+├── MenuRowDisplayable.swift    メニュー行・通知バナー共通プロトコル
+├── NotificationGrouping.swift  通知のカテゴリ集約・表示順
+├── RelativeTime.swift          相対時刻フォーマット
+├── ReleaseInfo.swift           リリース情報モデル
+├── SearchModels.swift          Search API モデル（UnreviewedPR / AssignedItem）
+├── SystemSoundNames.swift      システムサウンド名の抽出
+├── URLResolver.swift           通知 API URL → Web URL 変換
+└── VersionComparator.swift     タグ ⇔ CFBundleShortVersionString 比較
+
+Sources/gitkun/         実行ファイル本体（AppKit / Combine / SwiftUI 依存）
+├── gitkunApp.swift             @main、二重起動防止
+├── AppDelegate.swift           NSStatusItem 管理、アイコン切り替え、Kuntraykun 連携配線
+├── AppDelegate+Menu.swift      NSMenu 構築
+├── AppDelegate+Actions.swift   メニューアクション（Refresh / Settings / 更新チェック等）
+├── AppState.swift              状態管理・フェッチのオーケストレーション・通知発火
+├── GitHubNotificationService.swift  gh CLI 実行、トークンキャッシュ、各種フェッチ
+├── ProcessRunner.swift         外部コマンド実行の共通ランナー
+├── BrowserTabOpener.swift      既定ブラウザの既存タブ再利用（AppleScript）
+├── Poller.swift                Timer ラッパー
+├── SelfUpdater.swift           自己更新（zip 取得・展開・.app 入れ替え）
+├── LocalStore.swift            UserDefaults ラッパー
+├── UserNotifier.swift          UNUserNotificationCenter
 ├── LaunchAtLoginManager.swift  SMAppService
-├── URLResolver.swift         API URL → Web URL 変換
-└── NotificationMenuItemView.swift  通知行カスタムビュー（AppKit）
+├── NotificationMenuItemView.swift  メニュー行カスタムビュー
+├── SettingsView.swift          設定画面（SwiftUI）
+├── KuntraykunBridge.swift      kuntraykun 連携（アイコン集約・メニュー委譲）
+└── KuntraykunIconExport.swift  現在アイコンの PNG 書き出し（kuntraykun 一覧用）
 ```
 
 ## ログ確認
@@ -108,4 +163,5 @@ AppDelegate.swift             NSStatusItem 管理、NSMenu 構築、アイコン
 subsystem == "com.mtkg.gitkun"
 ```
 
-またはメニューの Status サブメニューから「Open Console.app」で起動し、「Copy Error」でエラー詳細をクリップボードにコピー可能。
+またはメニューの Status サブメニューから「Open Console.app」で起動し、「Copy Error」でエラー
+詳細をクリップボードにコピー可能。

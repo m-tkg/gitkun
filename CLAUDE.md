@@ -21,7 +21,7 @@ gitkun は、macOS のメニューバーに常駐し、GitHub の未読通知と
 ## 技術スタック
 
 - Swift Package Manager（swift-tools-version 5.9、Xcode/xcodeproj は使わない）
-- AppKit（NSStatusItem、NSMenu、NSPopover、アイコン切り替え、音声再生、ブラウザ起動）
+- AppKit（NSStatusItem、NSMenu、アイコン切り替え、音声再生、ブラウザ起動）
 - SwiftUI（gitkunApp.swift の Settings シーン・SettingsView のみ）
 - async/await + Combine
 - OSLog（ロギング）
@@ -120,6 +120,7 @@ swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"
 - 新規未読 / 新規レビュー依頼があれば macOS 通知バナー + 音（My PRs / Assigned Issues は通知しない）
 - メニューから通知一覧、レビュー依頼一覧、My PRs / Assigned Issues 一覧を表示
 - 項目クリックでブラウザ遷移（クリックで一覧から即削除はしない）。通知だけはクリック時に refresh を実行し、GitHub 側で既読になった通知が次フェッチで一覧から消える。レビュー依頼 / My PRs / Assigned Issues は次ポーリングの再取得で更新
+- ブラウザ遷移は `BrowserTabOpener` が担う。既定ブラウザが Safari / Chrome 系（Chromium 系ブラウザも対応）で、同じ PR / Issue を表示している既存タブが既にあればそのタブをアクティブにする（新規タブを増やさない）。未対応ブラウザ・未起動・タブ未検出・自動化権限拒否などの場合は `NSWorkspace` で通常どおり新規に開く（詳細は「URL 解決」節）
 - **未読/未レビューの組み合わせに応じてメニューバーアイコンが4通りに切り替わる**（My PRs / Assigned Issues はアイコン状態に影響しない）
 - 約1時間ごとに自リポジトリ（`m-tkg/gitkun`）の最新リリースを確認し、新バージョンがあればメニュー項目から自己更新できる（バナー通知はしない。後述「更新チェック・自己更新」）
 
@@ -285,6 +286,22 @@ Bundle からファイルを読み、`isTemplate`（通常アイコンのみ tru
 
 `URLResolver` は通知 (`GitHubNotification`) のみ使用。未レビュー PR は `html_url` を直接使う。
 
+### 既定ブラウザの既存タブ再利用（BrowserTabOpener）
+
+メニュー項目クリック時のブラウザ起動は `URLResolver` 等が解決した Web URL を `BrowserTabOpener.open(_:)`
+に渡すことで行う。
+
+- 既定ブラウザを `NSWorkspace.shared.urlForApplication(toOpen:)` で判定し、Safari / Chrome 系
+  （Google Chrome 本体・Beta/Dev/Canary、Microsoft Edge、Brave、Vivaldi、Opera などの Chromium 系）
+  であれば AppleScript（`NSAppleScript`）でウィンドウ・タブの URL 一覧を取得する
+- 取得した URL と開こうとしている URL が「同じ PR / Issue」であれば（`GitHubTabMatcher.matches`、
+  `.../pull/{n}` や `.../issues/{n}` までが一致すれば `/files` 等のサブページやフラグメント・
+  クエリ違いも同一とみなす）、新規タブを開かずそのタブをアクティブ化する
+- 既定ブラウザが未対応・未起動、一致するタブが無い、自動化（オートメーション/TCC）権限が拒否されている
+  等の場合はいずれも `NSWorkspace.shared.open(_:)` で通常どおり新規に開く（フォールバック）
+- この機能には `Resources/gitkun.entitlements` の apple-events エンタイトルメントと、初回のオートメーション
+  権限許可（システム設定 > プライバシーとセキュリティ > オートメーション）が必要
+
 ---
 
 ## 更新チェック・自己更新
@@ -303,44 +320,29 @@ Bundle からファイルを読み、`isTemplate`（通常アイコンのみ tru
 
 ## メニューバー UI
 
-通知セクションは `reason` で一次グルーピングする。グループは固定優先順（`NotificationReason.allCases` の宣言順）で並べ、未知 reason は末尾にアルファベット順で付ける。各ヘッダーに件数を併記。
+メニューは `AppDelegate+Menu.swift` の `buildMenu` が `NSMenuDelegate.menuNeedsUpdate` 経由で
+毎回組み立てる。通知・レビュー依頼・My PRs・Assigned Issues のいずれも、行の並ぶ一覧は
+フラットな行リストではなく**件数付きの子タイトルを持つサブメニュー**として表示する
+（共通実装は `addSubmenu`）。通知が0件の場合のみ `No unread notifications` の disabled 行を表示する。
 
 ```
-GitHub Notifications
+gitkun vX.Y.Z              ← 現在バージョン（disabled ヘッダー）
 ────────────────────
-Mentioned (2)             ← disabled ヘッダー
-● owner/repo              ← 緑の丸
-  タイトル（1行）
-  5m ago
-● owner/repo2
-  ...
+Review Requested (1) ▶     ← 通知の集約カテゴリ（サブメニュー、緑の丸）
+  ● owner/repo
+    タイトル（1行）
+    5m ago
+  ● owner/repo2
+    ...
+Mentioned (2) ▶
+Commented (3) ▶
+...                        ← 集約カテゴリ + 個別 reason（グルーピングは後述）
 ────────────────────
-Review Requested (1)
-● owner/repo
-  ...
+Review Requests (N) ▶      ← 未レビュー PR（サブメニュー、橙の丸）
+My PRs (N) ▶               ← assignee:@me + author:@me（サブメニュー、青の丸）
+Assigned Issues (M) ▶      ← assignee:@me の Issue（サブメニュー、紫の丸）
 ────────────────────
-Commented (3)
-...
-────────────────────
-Review Requests           ← 別セクション（未レビュー PR）
-────────────────────
-● owner/repo              ← 橙の丸
-  PR タイトル
-  3h ago
-────────────────────
-My PRs (N)                ← 別セクション（assignee:@me + author:@me）
-────────────────────
-● owner/repo              ← 青の丸
-  PR タイトル
-  ...
-────────────────────
-Assigned Issues (M)       ← 別セクション
-────────────────────
-● owner/repo              ← 紫の丸
-  Issue タイトル
-  ...
-────────────────────
-Status ▶                 ← サブメニュー
+Status ▶                   ← サブメニュー
   Status: OK
   Version: X.Y.Z
   Unread: X
@@ -348,24 +350,39 @@ Status ▶                 ← サブメニュー
   My PRs: N
   Assigned issues: M
   Last checked: HH:mm
-  [エラー詳細]            ← エラー時のみ
-  [Copy Error]            ← エラー時のみ
-  [Open Console.app]      ← エラー時のみ
+  [エラー詳細]              ← エラー時のみ
+  [Copy Error]              ← エラー時のみ
+  [Open Console.app]        ← エラー時のみ
 ────────────────────
-⬆ Update to vX.Y.Z…      ← 新バージョン検知時のみ表示
-────────────────────
-Refresh                   ← フェッチ中は disabled
-Settings…                 ← 設定ウィンドウを開く（⌘,）
+Refresh                     ← フェッチ中は disabled
+⬆ Update to vX.Y.Z… / Check for Updates…   ← 更新有無で1項目が切り替わる。フェッチ中は disabled
+Settings…                   ← 設定ウィンドウを開く（⌘,）
 ────────────────────
 Quit
 ```
 
-### reason グルーピング優先順
+各サブメニューの行は `NotificationMenuItemView`（AppKit カスタムビュー）で、リポジトリ名・
+タイトル・相対時刻（+ 通知のみ `subject.type` の補助ラベル）を表示する。クリックで `webURL` を
+`BrowserTabOpener` 経由でブラウザに開き、通知の行だけは追加で `AppState.fetchNow()` を呼ぶ
+（一覧からの即時削除はしない）。
 
-`GitHubNotification.swift` の `NotificationReason` 宣言順が優先度（小さいほど上）。
-現在の順:
-`mention` → `review_requested` → `approval_requested` → `assign` → `author` → `comment` → `state_change` → `ci_activity` → `push` → `team_mention` → `security_alert` → `subscribed` → `manual` → `invitation` → `member_feature_requested`。
-GitHub が新しい reason を追加した場合は「その他」として末尾にアルファベット順で出る。
+### 通知のグルーピング（NotificationGrouping）
+
+通知は `reason` そのものではなく、`NotificationGrouping.grouped` が返す**表示グループ**でサブメニュー化する。
+
+1. **集約カテゴリ**（`NotificationCategory`、`gitkunCore/NotificationGrouping.swift`）。宣言順が優先度:
+   `reviewRequested`（`review_requested` / `approval_requested`）→ `mentioned`（`mention` / `team_mention`）→
+   `commented`（`comment`）→ `stateChanged`（`state_change`）→ `authored`（`author`）
+2. 集約対象外の `reason` は個別グループのまま、`NotificationReason.allCases` の宣言順で
+   集約カテゴリの後ろに続く（`assign` / `ci_activity` / `push` / `security_alert` / `subscribed` /
+   `manual` / `invitation` / `member_feature_requested`）
+3. GitHub が返す未知 `reason` は最後にアルファベット順で付く
+
+**`review_requested` の再分類（`NotificationGrouping.effectiveReason`）**: GitHub は一度レビュー依頼
+された PR への通知を、その後コメントが付いても `reason=review_requested` のまま送り続ける。そこで
+現在も自分にレビュー依頼が立っている PR（`AppState.activeReviewKeys`、未レビュー PR フェッチ結果の
+生の `prKey` 集合）に含まれない `review_requested` 通知は、表示グループ判定時のみ `comment`
+（Commented グループ）に補正する。`activeReviewKeys` が未取得・取得失敗（nil）の場合は補正しない。
 
 ---
 
@@ -405,26 +422,47 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 
 ## アーキテクチャ
 
+### `Sources/gitkun/`（実行ファイル本体。AppKit / Combine / SwiftUI 依存）
+
 | ファイル | 役割 |
 |---|---|
 | `gitkunApp.swift` | `@main`、`NSApplicationDelegateAdaptor`、二重起動防止 |
-| `AppDelegate.swift` | `NSStatusItem` 管理、起動処理、アイコン切り替え（Combine）、`menuBarImage(named:)` |
+| `AppDelegate.swift` | `NSStatusItem` 管理、起動処理、アイコン切り替え（Combine）、`menuBarImage(named:)`、`KuntraykunBridge` の配線 |
 | `AppDelegate+Menu.swift` | `AppDelegate` の extension。`NSMenu` 構築（`buildMenu` / `addSubmenu` / `buildGroupedNotificationItems` / `buildStatusMenuItem`）、`NSMenuDelegate` 準拠 |
 | `AppDelegate+Actions.swift` | `AppDelegate` の extension。メニューの各アクション（Refresh / Settings / 更新チェック・インストール / Quit 等）とダイアログ |
-| `KuntraykunBridge.swift` | kuntraykun 連携ブリッジ（`sync`/`showMenu` 分散通知の観測、アイコン表示/非表示の判定） |
 | `AppState.swift` | `@MainActor ObservableObject`、状態管理、フェッチのオーケストレーション、通知発火（差分判定・マージは `FetchDiff` に委譲） |
-| `FetchDiff.swift` | 差分判定・My PRs マージの純関数（テスト対象） |
 | `GitHubNotificationService.swift` | `actor`、`gh` CLI 実行、トークンキャッシュ、通知・未レビュー PR・assignee 検索・author 検索・リリース取得のフェッチ |
 | `ProcessRunner.swift` | 外部コマンド実行の共通ランナー（pipe ストリーム読みで deadlock 回避） |
+| `BrowserTabOpener.swift` | 既定ブラウザの既存タブ再利用（AppleScript）。判定ロジックは `gitkunCore` の `GitHubTabMatcher` に委譲 |
 | `Poller.swift` | `Timer` の closure ベースラッパー（通知ポーリングと更新チェックで2インスタンス使用） |
 | `SelfUpdater.swift` | 最新リリース zip の取得・展開・`.app` 入れ替え・再起動 |
 | `LocalStore.swift` | `UserDefaults` ラッパー |
 | `UserNotifier.swift` | `UNUserNotificationCenter`、通知クリックでブラウザ起動 |
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
-| `URLResolver.swift` | API URL → Web URL 変換（通知のみ） |
-| `NotificationMenuItemView.swift` | 行カスタムビュー（通知とレビュー依頼の両方で再利用、ドット色で区別） |
-| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音 3 種（N/A で個別ミュート）・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ システムサウンド列挙 |
-| `GitHubNotification.swift` / `SearchModels.swift` / `ReleaseInfo.swift` / `VersionComparator.swift` / `AppStatus.swift` / `AppError.swift` / `MenuRowDisplayable.swift` | データモデル・enum 定義（`Models.swift` を関心別に分割済み。通知 / 検索結果（`UnreviewedPR`, `AssignedItem`） / リリース情報 / バージョン比較 / ステータス / エラー / メニュー行表示 protocol） |
+| `NotificationMenuItemView.swift` | 行カスタムビュー（通知・レビュー依頼・My PRs・Assigned Issues で共通利用、ドット色で区別） |
+| `SettingsView.swift` | 設定の SwiftUI ビュー（通知音 2 種（N/A で個別ミュート）・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ `SystemSounds`（システムサウンド列挙） |
+| `KuntraykunBridge.swift` | kuntraykun 連携ブリッジ（`sync`/`showMenu` 分散通知の観測、アイコン表示/非表示の判定、アップデート有無の報告） |
+| `KuntraykunIconExport.swift` | 現在のメニューバーアイコンを kuntraykun 一覧用の共有ディレクトリへ PNG 書き出し（連携 v2） |
+
+### `Sources/gitkunCore/`（純粋ロジック。AppKit 非依存、テスト対象）
+
+| ファイル | 役割 |
+|---|---|
+| `GitHubNotification.swift` | 通知モデル（`GitHubNotification`）、`NotificationReason`、`NotificationSubjectType`、`pullRequestKey` |
+| `SearchModels.swift` | Search API モデル（`UnreviewedPR`, `AssignedItem`, `SearchResponse`）、`RepositoryURLContaining` |
+| `ReleaseInfo.swift` | リリース情報モデル（更新チェック用） |
+| `VersionComparator.swift` | タグ ⇔ `CFBundleShortVersionString` の数値比較 |
+| `AppStatus.swift` | `AppStatus`、`PollingIntervalPolicy`（ポーリング間隔の解決） |
+| `AppError.swift` | `AppError`（フェッチ・パースエラー種別） |
+| `FetchErrors.swift` | 複数フェッチの `Result` を集約する `FetchErrors` |
+| `FetchDiff.swift` | 新規差分判定・My PRs マージ・WIP フィルタ・Assigned Issues 抽出の純関数（テスト対象） |
+| `MenuRowDisplayable.swift` | メニュー行・通知バナー共通 protocol（`MenuRowDisplayable`）と各モデルへの適合、`NotificationBanner` |
+| `NotificationGrouping.swift` | 通知の集約カテゴリ（`NotificationCategory`）・表示グループ化・`review_requested` 再分類（`effectiveReason`） |
+| `GitHubTabMatcher.swift` | ブラウザタブと開こうとしている URL が同一ページかの判定（`BrowserTabOpener` から利用） |
+| `MenuBarIcon.swift` | 未読/未レビューの有無からメニューバーアイコンのアセット名を導出 |
+| `URLResolver.swift` | 通知の API URL → Web URL 変換 |
+| `RelativeTime.swift` | ISO8601 文字列 → 相対時刻文字列（"5m ago" 等） |
+| `SystemSoundNames.swift` | システムサウンドのファイル名一覧から表示名一覧を作る純ロジック |
 
 ---
 
@@ -446,12 +484,19 @@ gitkun/
 │   ├── MenuBarIconUnreview.png          # 未レビューあり（色付き、32px）
 │   └── MenuBarIconUnreadAndUnreview.png # 両方あり（色付き、32px）
 ├── Sources/
-│   ├── gitkunCore/          # 純粋ロジック（テスト対象、AppKit 非依存）
-│   │   ├── GitHubNotification.swift  SearchModels.swift  ReleaseInfo.swift  VersionComparator.swift
-│   │   ├── AppStatus.swift  AppError.swift  MenuRowDisplayable.swift
-│   │   ├── URLResolver.swift  FetchDiff.swift  GitHubTabMatcher.swift
-│   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine 依存）
-│       └── *.swift
+│   ├── gitkunCore/          # 純粋ロジック（テスト対象、AppKit 非依存。15 ファイル）
+│   │   ├── AppError.swift  AppStatus.swift  FetchDiff.swift  FetchErrors.swift
+│   │   ├── GitHubNotification.swift  GitHubTabMatcher.swift  MenuBarIcon.swift
+│   │   ├── MenuRowDisplayable.swift  NotificationGrouping.swift  RelativeTime.swift
+│   │   ├── ReleaseInfo.swift  SearchModels.swift  SystemSoundNames.swift
+│   │   └── URLResolver.swift  VersionComparator.swift
+│   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine 依存。17 ファイル）
+│       ├── AppDelegate.swift  AppDelegate+Actions.swift  AppDelegate+Menu.swift
+│       ├── AppState.swift  BrowserTabOpener.swift  GitHubNotificationService.swift
+│       ├── gitkunApp.swift  KuntraykunBridge.swift  KuntraykunIconExport.swift
+│       ├── LaunchAtLoginManager.swift  LocalStore.swift  NotificationMenuItemView.swift
+│       ├── Poller.swift  ProcessRunner.swift  SelfUpdater.swift
+│       └── SettingsView.swift  UserNotifier.swift
 └── Tests/
     └── gitkunCoreTests/     # ユニットテスト（@testable import gitkunCore。アプリは起動しない）
         └── *Tests.swift
@@ -459,7 +504,7 @@ gitkun/
 
 ### テスト
 
-- テスト対象は `gitkunCore` ターゲットの純粋ロジック（`GitHubNotification.swift`・`SearchModels.swift`・`ReleaseInfo.swift`・`VersionComparator.swift`・`AppStatus.swift`・`AppError.swift`・`MenuRowDisplayable.swift`・`URLResolver.swift`・`FetchDiff.swift`・`GitHubTabMatcher.swift`）。テストは `@testable import gitkunCore` でアクセスする
+- テスト対象は `gitkunCore` ターゲットの純粋ロジック（上表の15ファイル）。テストは `@testable import gitkunCore` でアクセスする
   - アプリ（`gitkun` ターゲット）を起動しないため、テスト実行時に GitHub ポーリングや通知権限ダイアログが発生しない
   - 新たにテスト対象のロジックを増やす場合は、AppKit 非依存なら `Sources/gitkunCore/` に置く。app から使う型は `public` 化する（テストは `@testable` なので internal でも見える）
 - 実行は `swift test`
