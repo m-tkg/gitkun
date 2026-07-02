@@ -16,3 +16,14 @@ public enum AppStatus {
     case ok
     case error(String)
 }
+
+extension AppStatus {
+    public var displayLabel: String {
+        switch self {
+        case .idle:           return "Status: -"
+        case .loading:        return "Status: Loading..."
+        case .ok:             return "Status: OK"
+        case .error(let msg): return "Status: \(msg)"
+        }
+    }
+}

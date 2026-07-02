@@ -210,32 +210,8 @@ final class AppState: ObservableObject {
     /// 新規が 1 件以上あれば通知バナー + 音を出す。
     private func notifyIfNew<T: MenuRowDisplayable>(_ newOnes: [T], title: String, soundName: String) {
         guard let first = newOnes.first else { return }
-        let extra = newOnes.count - 1
-        let body = extra > 0 ? "\(first.displayTitle) (+\(extra) more)" : first.displayTitle
+        guard let body = NotificationBanner.body(for: newOnes as [any MenuRowDisplayable]) else { return }
         notifier.send(title: title, body: body, url: first.webURL)
         notifier.playSound(named: soundName)
-    }
-}
-
-// MARK: - エラー集約
-
-private struct FetchErrors {
-    private(set) var details: [String] = []
-    private(set) var labels: [String] = []
-
-    var isEmpty: Bool { details.isEmpty }
-    var detail: String { details.joined(separator: "\n") }
-    var statusLabel: String { labels.joined(separator: ", ") }
-
-    /// `Result` を unwrap し、失敗時は内部にエラーを蓄積して `nil` を返す。
-    mutating func unwrap<T>(_ result: Result<T, AppError>) -> T? {
-        switch result {
-        case .success(let value):
-            return value
-        case .failure(let error):
-            details.append(error.errorDescription ?? "\(error)")
-            labels.append(error.statusLabel)
-            return nil
-        }
     }
 }
