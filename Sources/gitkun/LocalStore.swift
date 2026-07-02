@@ -14,16 +14,7 @@ final class LocalStore {
         static let excludeWIP = "excludeWIP"
     }
 
-    private init() {
-        // 廃止した設定キーの残骸を掃除する
-        defaults.removeObject(forKey: "knownNotificationUpdatedAts")
-        defaults.removeObject(forKey: "diffStrategy")
-        // soundEnabled は各サウンドの N/A 選択（*SoundName）に置き換えられた
-        defaults.removeObject(forKey: "soundEnabled")
-        // アップデート通知バナーを廃止したため、関連キーも掃除する
-        defaults.removeObject(forKey: "updateSoundName")
-        defaults.removeObject(forKey: "lastNotifiedReleaseTag")
-    }
+    private init() {}
 
     var knownIDs: Set<String> {
         get { Set(defaults.stringArray(forKey: Keys.knownIDs) ?? []) }
@@ -35,12 +26,12 @@ final class LocalStore {
         set { defaults.set(Array(newValue), forKey: Keys.knownUnreviewedIDs) }
     }
 
-    var pollingInterval: PollingInterval {
+    var pollingInterval: Int {
         get {
             let raw = defaults.integer(forKey: Keys.pollingInterval)
-            return PollingInterval(rawValue: raw) ?? .sec30
+            return PollingIntervalPolicy.effectiveSeconds(raw)
         }
-        set { defaults.set(newValue.rawValue, forKey: Keys.pollingInterval) }
+        set { defaults.set(newValue, forKey: Keys.pollingInterval) }
     }
 
     /// 新規未読通知のときに鳴らす音の名前。SettingsView の @AppStorage と同じキー。

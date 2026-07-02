@@ -1,24 +1,21 @@
 import XCTest
 @testable import gitkunCore
 
-/// `PollingInterval` の現行挙動を固定する特性テスト。
+/// `PollingIntervalPolicy.effectiveSeconds` の挙動を固定する特性テスト。
 final class PollingIntervalTests: XCTestCase {
 
-    // MARK: - 有効値
+    // MARK: - フォールバック（0以下・未設定相当）
 
-    func testValidRawValuesMapToExpectedCases() {
-        XCTAssertEqual(PollingInterval(rawValue: 15), .sec15)
-        XCTAssertEqual(PollingInterval(rawValue: 30), .sec30)
-        XCTAssertEqual(PollingInterval(rawValue: 60), .sec60)
-        XCTAssertEqual(PollingInterval(rawValue: 120), .sec120)
-        XCTAssertEqual(PollingInterval(rawValue: 300), .sec300)
+    func testNonPositiveValuesFallBackTo30() {
+        XCTAssertEqual(PollingIntervalPolicy.effectiveSeconds(0), 30)
+        XCTAssertEqual(PollingIntervalPolicy.effectiveSeconds(-1), 30)
     }
 
-    // MARK: - 無効値
+    // MARK: - 1以上はそのまま使う
 
-    func testInvalidRawValuesReturnNil() {
-        XCTAssertNil(PollingInterval(rawValue: 0))
-        XCTAssertNil(PollingInterval(rawValue: 45))
-        XCTAssertNil(PollingInterval(rawValue: -1))
+    func testPositiveValuesPassThrough() {
+        XCTAssertEqual(PollingIntervalPolicy.effectiveSeconds(15), 15)
+        XCTAssertEqual(PollingIntervalPolicy.effectiveSeconds(45), 45)
+        XCTAssertEqual(PollingIntervalPolicy.effectiveSeconds(300), 300)
     }
 }

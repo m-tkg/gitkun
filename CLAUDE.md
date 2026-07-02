@@ -395,9 +395,10 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 から実行時に列挙、選択時にプレビュー再生する。各 Picker の先頭には `N/A`
 （`SystemSounds.noSound`）があり、選ぶとそのイベントの音だけ鳴らさない。
 `@AppStorage` と `LocalStore` は同じ UserDefaults キーを共有する。
-ポーリング間隔のみ UI 未実装で `LocalStore` 経由で変更可能。
+ポーリング間隔のみ UI 未実装で、`defaults` 経由で任意の秒数を設定可能（`PollingIntervalPolicy.effectiveSeconds`
+が 0 以下・未設定を 30 にフォールバック、1 以上はそのまま使う。15/60/120/300 等の値もそのまま使える）。
 旧キー `diffStrategy` / `knownNotificationUpdatedAts` / `soundEnabled` /
-`updateSoundName` / `lastNotifiedReleaseTag` は廃止済みで、起動時に削除される
+`updateSoundName` / `lastNotifiedReleaseTag` は v1.x で廃止済み（掃除コードも撤去済み）
 （音全体の ON/OFF は各サウンドの N/A 選択に置き換え。更新検知のバナー通知は廃止）。
 
 ---
