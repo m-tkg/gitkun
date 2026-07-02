@@ -5,7 +5,7 @@ final class LocalStore {
     static let shared = LocalStore()
     private let defaults = UserDefaults.standard
 
-    private enum Keys {
+    enum Keys {
         static let knownIDs = "knownNotificationIDs"
         static let knownUnreviewedIDs = "knownUnreviewedPRIDs"
         static let pollingInterval = "pollingInterval"

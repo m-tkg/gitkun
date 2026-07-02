@@ -3,7 +3,7 @@ import UserNotifications
 import AppKit
 import OSLog
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "UserNotifier")
+private let logger = Logger(subsystem: logSubsystem, category: "UserNotifier")
 
 final class UserNotifier: NSObject {
 

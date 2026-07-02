@@ -3,7 +3,7 @@ import gitkunCore
 import Combine
 import OSLog
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "AppState")
+private let logger = Logger(subsystem: logSubsystem, category: "AppState")
 
 @MainActor
 final class AppState: ObservableObject {
@@ -40,7 +40,7 @@ final class AppState: ObservableObject {
     private static let updateCheckInterval = 3600
 
     /// メニューに保持する通知・レビュー依頼の上限件数。
-    private static let displayLimit = 20
+    static let displayLimit = 20
     /// My PRs / Assigned Issues の保持上限件数。
     private static let itemLimit = 50
 

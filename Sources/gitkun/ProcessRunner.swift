@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "ProcessRunner")
+private let logger = Logger(subsystem: logSubsystem, category: "ProcessRunner")
 
 /// 外部コマンドを起動して stdout を返す共通ランナー。
 ///

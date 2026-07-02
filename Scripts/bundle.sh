@@ -26,8 +26,8 @@ fi
 APP="$ROOT/$APP_NAME.app"
 
 echo "==> Building ($CONFIG)"
-swift build -c "$CONFIG" --package-path "$ROOT"
 BIN_DIR="$(swift build -c "$CONFIG" --package-path "$ROOT" --show-bin-path)"
+swift build -c "$CONFIG" --package-path "$ROOT"
 
 echo "==> Bundling $APP"
 rm -rf "$APP"

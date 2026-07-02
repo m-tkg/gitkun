@@ -1,5 +1,7 @@
 import SwiftUI
 
+let logSubsystem = "com.mtkg.gitkun"
+
 @main
 struct GitkunApp: App {
 

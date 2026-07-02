@@ -2,7 +2,7 @@ import AppKit
 import gitkunCore
 import OSLog
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "SelfUpdater")
+private let logger = Logger(subsystem: logSubsystem, category: "SelfUpdater")
 
 /// 最新リリースの zip をダウンロード・展開し、起動中の `.app` を上書きして再起動する。
 ///

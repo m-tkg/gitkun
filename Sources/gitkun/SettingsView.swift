@@ -8,9 +8,9 @@ struct SettingsView: View {
     @ObservedObject var appState: AppState
     @ObservedObject var launchManager: LaunchAtLoginManager
 
-    @AppStorage("unreadSoundName") private var unreadSoundName = "Glass"
-    @AppStorage("reviewSoundName") private var reviewSoundName = "Glass"
-    @AppStorage("excludeWIP") private var excludeWIP = true
+    @AppStorage(LocalStore.Keys.unreadSoundName) private var unreadSoundName = "Glass"
+    @AppStorage(LocalStore.Keys.reviewSoundName) private var reviewSoundName = "Glass"
+    @AppStorage(LocalStore.Keys.excludeWIP) private var excludeWIP = true
 
     /// 先頭に「鳴らさない」を表す N/A を置く
     private let soundNames = [SystemSounds.noSound] + SystemSounds.availableNames()
