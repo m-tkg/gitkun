@@ -21,15 +21,15 @@ final class SelfUpdater {
         var errorDescription: String? {
             switch self {
             case .notWritable(let path):
-                return "アプリの場所に書き込めません: \(path)。手動での更新が必要です。"
+                return "Can't write to \(path). Manual update is required."
             case .archiveNotFound:
-                return "リリースに zip が見つかりませんでした。"
+                return "No zip file found in the release."
             case .commandFailed(let msg):
-                return "更新コマンドが失敗しました: \(msg)"
+                return "Update command failed: \(msg)"
             case .bundleNotFound:
-                return "ダウンロードしたアーカイブに .app が見つかりませんでした。"
+                return "No .app found in the downloaded archive."
             case .bundleIDMismatch:
-                return "ダウンロードした .app の識別子が一致しませんでした。"
+                return "The downloaded .app's identifier doesn't match."
             }
         }
     }
@@ -126,9 +126,9 @@ final class SelfUpdater {
         do {
             _ = try await ProcessRunner.run(executable: executable, arguments: arguments)
         } catch let failure as ProcessRunner.Failure {
-            let msg = failure.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            let msg = failure.conciseMessage
             logger.error("Command failed (\(executable, privacy: .public) exit=\(failure.exitCode)): \(msg)")
-            throw UpdateError.commandFailed(msg.isEmpty ? "exit \(failure.exitCode)" : msg)
+            throw UpdateError.commandFailed(msg)
         }
     }
 }
