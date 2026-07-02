@@ -164,7 +164,7 @@ actor GitHubNotificationService {
                 throw AppError.authRequired
             }
             logger.error("Fetch failed (exit=\(failure.exitCode)): \(errMsg)")
-            throw AppError.fetchFailed(errMsg.trimmingCharacters(in: .whitespacesAndNewlines))
+            throw AppError.fetchFailed(failure.conciseMessage)
         }
     }
 

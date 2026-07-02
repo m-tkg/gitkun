@@ -107,3 +107,11 @@ enum ProcessRunner {
         }
     }
 }
+
+extension ProcessRunner.Failure {
+    /// stderr を1行のエラーメッセージ用文字列に整形する。空なら exit code にフォールバックする。
+    var conciseMessage: String {
+        let trimmed = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "exit \(exitCode)" : trimmed
+    }
+}
