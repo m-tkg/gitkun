@@ -2,7 +2,7 @@ import Foundation
 import ServiceManagement
 import OSLog
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "LaunchAtLoginManager")
+private let logger = Logger(subsystem: logSubsystem, category: "LaunchAtLoginManager")
 
 final class LaunchAtLoginManager: ObservableObject {
 

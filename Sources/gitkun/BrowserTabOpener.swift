@@ -2,7 +2,7 @@ import AppKit
 import gitkunCore
 import OSLog
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "BrowserTabOpener")
+private let logger = Logger(subsystem: logSubsystem, category: "BrowserTabOpener")
 
 /// GitHub の URL を既定ブラウザで開く。既定が Safari / Chrome で、同じ PR / Issue を表示している
 /// タブが既にあれば、そのタブをアクティブにする（新規タブを増やさない）。
@@ -64,27 +64,31 @@ enum BrowserTabOpener {
     }
 
     private static func openOnMain(_ url: URL) {
+        guard !activateExistingTab(for: url) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    /// 既存タブが見つかってアクティブ化できれば true を返す。それ以外（未対応ブラウザ・未起動・
+    /// タブ未検出・アクティブ化失敗）は false を返し、各分岐でログを残す（fallback 理由の切り分け用）。
+    private static func activateExistingTab(for url: URL) -> Bool {
         guard let browser = defaultBrowser() else {
             logger.debug("Default browser is not a supported browser; opening normally")
-            NSWorkspace.shared.open(url)
-            return
+            return false
         }
         guard isRunning(browser) else {
             logger.debug("\(browser.appName, privacy: .public) is not running; opening normally")
-            NSWorkspace.shared.open(url)
-            return
+            return false
         }
         guard let tab = findMatchingTab(for: url, in: browser) else {
             logger.debug("No existing tab matched \(url.absoluteString, privacy: .public); opening new tab")
-            NSWorkspace.shared.open(url)
-            return
+            return false
         }
         guard activate(tab, in: browser) else {
             logger.error("Found matching tab but failed to activate it; opening new tab")
-            NSWorkspace.shared.open(url)
-            return
+            return false
         }
         logger.debug("Activated existing tab for \(url.absoluteString, privacy: .public)")
+        return true
     }
 
     // MARK: - 既定ブラウザの判定

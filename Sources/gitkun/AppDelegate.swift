@@ -4,7 +4,7 @@ import Combine
 import OSLog
 import SwiftUI
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "AppDelegate")
+private let logger = Logger(subsystem: logSubsystem, category: "AppDelegate")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -163,7 +163,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if items.isEmpty {
             submenu.addItem(disabled: emptyTitle)
         } else {
-            for item in items.prefix(20) {
+            for item in items.prefix(AppState.displayLimit) {
                 let menuItem = NSMenuItem()
                 menuItem.view = NotificationMenuItemView(
                     repoFullName: item.repoFullName,

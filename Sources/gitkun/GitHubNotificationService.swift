@@ -2,7 +2,7 @@ import Foundation
 import gitkunCore
 import OSLog
 
-private let logger = Logger(subsystem: "com.mtkg.gitkun", category: "GitHubNotificationService")
+private let logger = Logger(subsystem: logSubsystem, category: "GitHubNotificationService")
 
 actor GitHubNotificationService {
 
@@ -14,12 +14,25 @@ actor GitHubNotificationService {
         return d
     }()
 
+    /// `gh` の探索先ディレクトリ。`findGHPath()` の候補パスと `baseEnv()` の PATH の両方がここから導出される。
+    private static let ghSearchDirectories = [
+        "/opt/homebrew/bin",
+        "/usr/local/bin",
+    ]
+
     static func findGHPath() -> String? {
-        let candidates = [
-            "/opt/homebrew/bin/gh",
-            "/usr/local/bin/gh",
-        ]
-        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+        ghSearchDirectories
+            .map { "\($0)/gh" }
+            .first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    /// `findGHPath()` の結果を取得する。見つからなければログを残して `AppError.ghNotFound` を投げる。
+    private func requireGHPath() throws -> String {
+        guard let ghPath = Self.findGHPath() else {
+            logger.error("gh not found in known paths")
+            throw AppError.ghNotFound
+        }
+        return ghPath
     }
 
     // MARK: - 公開 API
@@ -58,10 +71,7 @@ actor GitHubNotificationService {
 
     /// 指定タグのリリースから zip 資産を `directory` にダウンロードする。
     func downloadLatestReleaseZip(tag: String, into directory: URL) async throws {
-        guard let ghPath = Self.findGHPath() else {
-            logger.error("gh not found in known paths")
-            throw AppError.ghNotFound
-        }
+        let ghPath = try requireGHPath()
         let token = try await resolveToken(ghPath: ghPath)
         logger.info("Downloading release \(tag, privacy: .public)")
         _ = try await runProcess(executable: ghPath,
@@ -110,10 +120,7 @@ actor GitHubNotificationService {
     // MARK: - gh API 呼び出し
 
     private func runGHAPI(_ endpoint: String, label: String) async throws -> Data {
-        guard let ghPath = Self.findGHPath() else {
-            logger.error("gh not found in known paths")
-            throw AppError.ghNotFound
-        }
+        let ghPath = try requireGHPath()
         let token = try await resolveToken(ghPath: ghPath)
         logger.info("Fetching \(label, privacy: .public)")
         return try await runProcess(executable: ghPath,
@@ -165,7 +172,8 @@ actor GitHubNotificationService {
 
     private func baseEnv() -> [String: String] {
         var env = ProcessInfo.processInfo.environment
-        env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        let systemDirectories = ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]
+        env["PATH"] = (Self.ghSearchDirectories + systemDirectories).joined(separator: ":")
         env["HOME"] = NSHomeDirectory()
         return env
     }
