@@ -57,7 +57,7 @@ final class AppState: ObservableObject {
 
     /// 通知ポーリングと更新チェックを開始する。どちらも開始時に即時 1 回発火する。
     func startPolling() {
-        let fetchPoller = Poller(interval: store.pollingInterval.rawValue) { [weak self] in
+        let fetchPoller = Poller(interval: store.pollingInterval) { [weak self] in
             Task { @MainActor in await self?.performFetch() }
         }
         poller = fetchPoller

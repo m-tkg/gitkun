@@ -2,12 +2,14 @@ import Foundation
 
 // MARK: - 設定・ステータス
 
-public enum PollingInterval: Int {
-    case sec15 = 15
-    case sec30 = 30
-    case sec60 = 60
-    case sec120 = 120
-    case sec300 = 300
+/// ポーリング間隔（秒）の解決ポリシー。UserDefaults に保存された生の Int を
+/// 実際に使う秒数へ変換する純関数。
+public enum PollingIntervalPolicy {
+    /// `stored` が 0 以下（未設定含む）なら 30 にフォールバックし、
+    /// 1 以上ならその値をそのまま使う。
+    public static func effectiveSeconds(_ stored: Int) -> Int {
+        stored > 0 ? stored : 30
+    }
 }
 
 public enum AppStatus {
