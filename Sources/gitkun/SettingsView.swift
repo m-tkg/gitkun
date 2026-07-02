@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import gitkunCore
 
 /// 設定画面（通知音・Launch at login・バージョン情報）。
 /// `@AppStorage` のキーは `LocalStore` と共有しており、保存先は同じ UserDefaults。
@@ -61,10 +62,6 @@ enum SystemSounds {
     static func availableNames() -> [String] {
         let dir = "/System/Library/Sounds"
         let files = (try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? []
-        let names = files
-            .filter { $0.hasSuffix(".aiff") }
-            .map { ($0 as NSString).deletingPathExtension }
-            .sorted()
-        return names.isEmpty ? ["Glass"] : names
+        return SystemSoundNames.names(fromFiles: files)
     }
 }

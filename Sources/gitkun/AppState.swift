@@ -188,11 +188,12 @@ final class AppState: ObservableObject {
         activeReviewKeys = Set(fetched.map(\.prKey))
 
         // draft / タイトル先頭 [WIP] / wip ラベルの除外（設定で ON/OFF、デフォルト ON）
-        let fetched = store.excludeWIP ? fetched.filter(\.isReviewWaiting) : fetched
-        let (newOnes, nextKnown) = FetchDiff.newItems(fetched: fetched, known: store.knownUnreviewedIDs)
+        let filtered = store.excludeWIP ? fetched.filter(\.isReviewWaiting) : fetched
+        let (newOnes, nextKnown) = FetchDiff.newItems(fetched: filtered, known: store.knownUnreviewedIDs)
         store.knownUnreviewedIDs = nextKnown
 
-        unreviewedPRs = Array(fetched.prefix(Self.displayLimit))
+        // 上の filtered は既に WIP フィルタ済みなので、ここでは prefix のみ適用（excludeWIP: false）。
+        unreviewedPRs = FetchDiff.reviewRequests(fetched: filtered, excludeWIP: false, limit: Self.displayLimit)
 
         if isFirstFetch { return }
         notifyIfNew(newOnes, title: "GitHub Review Requests", soundName: store.reviewSoundName)
@@ -203,7 +204,7 @@ final class AppState: ObservableObject {
 
         // Issues: assigned 側のみ。assigned が失敗した場合は前回値を据え置き。
         if let assigned {
-            assignedIssues = Array(assigned.filter { !$0.isPullRequest }.prefix(Self.itemLimit))
+            assignedIssues = FetchDiff.assignedIssues(from: assigned, limit: Self.itemLimit)
         }
     }
 

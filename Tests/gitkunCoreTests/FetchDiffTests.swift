@@ -88,3 +88,87 @@ final class MyPRsMergeTests: XCTestCase {
         XCTAssertEqual(merged.count, 50)
     }
 }
+
+final class ReviewRequestsFilterTests: XCTestCase {
+
+    private func makePR(id: Int,
+                         draft: Bool = false,
+                         title: String = "title",
+                         labelNames: [String] = []) -> UnreviewedPR {
+        UnreviewedPR(
+            id: id,
+            number: id,
+            title: title,
+            htmlUrl: "https://github.com/o/r/pull/\(id)",
+            repositoryUrl: "https://api.github.com/repos/o/r",
+            updatedAt: "2026-01-01T00:00:00Z",
+            draft: draft,
+            labels: labelNames.map { UnreviewedPR.Label(name: $0) }
+        )
+    }
+
+    func testExcludeWIPTrueFiltersOutDraftTitleAndLabel() {
+        let fetched = [
+            makePR(id: 1),
+            makePR(id: 2, draft: true),
+            makePR(id: 3, title: "[WIP] something"),
+            makePR(id: 4, labelNames: ["wip"]),
+        ]
+        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: true, limit: 50)
+        XCTAssertEqual(result.map(\.id), [1])
+    }
+
+    func testExcludeWIPFalseKeepsAll() {
+        let fetched = [
+            makePR(id: 1),
+            makePR(id: 2, draft: true),
+            makePR(id: 3, title: "[WIP] something"),
+            makePR(id: 4, labelNames: ["wip"]),
+        ]
+        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: false, limit: 50)
+        XCTAssertEqual(result.map(\.id), [1, 2, 3, 4])
+    }
+
+    func testLimitExactBoundaryKeepsAll() {
+        let fetched = (1...3).map { makePR(id: $0) }
+        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: true, limit: 3)
+        XCTAssertEqual(result.map(\.id), [1, 2, 3])
+    }
+
+    func testLimitExceededTruncates() {
+        let fetched = (1...5).map { makePR(id: $0) }
+        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: true, limit: 3)
+        XCTAssertEqual(result.map(\.id), [1, 2, 3])
+    }
+}
+
+final class AssignedIssuesExtractionTests: XCTestCase {
+
+    private func makeItem(id: Int, isPR: Bool) -> AssignedItem {
+        AssignedItem(
+            id: id,
+            title: "item\(id)",
+            htmlUrl: "https://github.com/o/r/issues/\(id)",
+            repositoryUrl: "https://api.github.com/repos/o/r",
+            updatedAt: "2026-01-01T00:00:00Z",
+            pullRequest: isPR ? .init() : nil
+        )
+    }
+
+    func testExtractsOnlyIssuesFromMixedList() {
+        let mixed = [
+            makeItem(id: 1, isPR: true),
+            makeItem(id: 2, isPR: false),
+            makeItem(id: 3, isPR: true),
+            makeItem(id: 4, isPR: false),
+        ]
+        let result = FetchDiff.assignedIssues(from: mixed, limit: 50)
+        XCTAssertEqual(result.map(\.id), [2, 4])
+    }
+
+    func testLimitIsApplied() {
+        let issues = (1...60).map { makeItem(id: $0, isPR: false) }
+        let result = FetchDiff.assignedIssues(from: issues, limit: 50)
+        XCTAssertEqual(result.count, 50)
+    }
+}
