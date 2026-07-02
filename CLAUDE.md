@@ -328,13 +328,13 @@ Bundle からファイルを読み、`isTemplate`（通常アイコンのみ tru
 ```
 gitkun vX.Y.Z              ← 現在バージョン（disabled ヘッダー）
 ────────────────────
-Mentioned (2) ▶            ← 通知の集約カテゴリ（サブメニュー、緑の丸）
+Review Requested (1) ▶     ← 通知の集約カテゴリ（サブメニュー、緑の丸）
   ● owner/repo
     タイトル（1行）
     5m ago
   ● owner/repo2
     ...
-Review Requested (1) ▶
+Mentioned (2) ▶
 Commented (3) ▶
 ...                        ← 集約カテゴリ + 個別 reason（グルーピングは後述）
 ────────────────────

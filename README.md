@@ -56,8 +56,8 @@ open gitkun.app
 ```
 gitkun v1.12.1                    ← 現在バージョン（操作不可）
 ────────────────────
-Mentioned (2) ▶                   ← 通知カテゴリ（サブメニュー）
-Review Requested (1) ▶
+Review Requested (1) ▶            ← 通知カテゴリ（サブメニュー）
+Mentioned (2) ▶
 Commented (3) ▶
 ...
 ────────────────────
