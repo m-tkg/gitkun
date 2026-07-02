@@ -407,7 +407,9 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | ファイル | 役割 |
 |---|---|
 | `gitkunApp.swift` | `@main`、`NSApplicationDelegateAdaptor`、二重起動防止 |
-| `AppDelegate.swift` | `NSStatusItem` 管理、`NSMenu` 構築、アイコン切り替え（Combine） |
+| `AppDelegate.swift` | `NSStatusItem` 管理、起動処理、アイコン切り替え（Combine）、`menuBarImage(named:)` |
+| `AppDelegate+Menu.swift` | `AppDelegate` の extension。`NSMenu` 構築（`buildMenu` / `addSubmenu` / `buildGroupedNotificationItems` / `buildStatusMenuItem`）、`NSMenuDelegate` 準拠 |
+| `AppDelegate+Actions.swift` | `AppDelegate` の extension。メニューの各アクション（Refresh / Settings / 更新チェック・インストール / Quit 等）とダイアログ |
 | `KuntraykunBridge.swift` | kuntraykun 連携ブリッジ（`sync`/`showMenu` 分散通知の観測、アイコン表示/非表示の判定） |
 | `AppState.swift` | `@MainActor ObservableObject`、状態管理、フェッチのオーケストレーション、通知発火（差分判定・マージは `FetchDiff` に委譲） |
 | `FetchDiff.swift` | 差分判定・My PRs マージの純関数（テスト対象） |
