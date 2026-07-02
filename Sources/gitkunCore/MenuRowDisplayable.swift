@@ -56,3 +56,15 @@ extension AssignedItem: MenuRowDisplayable {
     public var updatedAtString: String { updatedAt }
     public var webURL: URL { URL(string: htmlUrl) ?? githubFallbackURL }
 }
+
+// MARK: - 通知バナー本文
+
+public enum NotificationBanner {
+    /// 新規アイテム配列から通知バナー本文を組み立てる。
+    /// 先頭アイテムのタイトル + 2件目以降があれば "(+N more)" を付与。0件なら nil。
+    public static func body(for items: [any MenuRowDisplayable]) -> String? {
+        guard let first = items.first else { return nil }
+        let extra = items.count - 1
+        return extra > 0 ? "\(first.displayTitle) (+\(extra) more)" : first.displayTitle
+    }
+}

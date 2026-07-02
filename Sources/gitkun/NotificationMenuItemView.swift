@@ -1,4 +1,5 @@
 import AppKit
+import gitkunCore
 
 final class NotificationMenuItemView: NSView {
 
@@ -82,16 +83,8 @@ final class NotificationMenuItemView: NSView {
         return f
     }
 
-    private static let iso8601Formatter = ISO8601DateFormatter()
-    private static let relativeFormatter: RelativeDateTimeFormatter = {
-        let f = RelativeDateTimeFormatter()
-        f.unitsStyle = .abbreviated
-        return f
-    }()
-
     private var relativeTime: String {
-        guard let date = Self.iso8601Formatter.date(from: updatedAt) else { return "" }
-        return Self.relativeFormatter.localizedString(for: date, relativeTo: Date())
+        RelativeTime.format(iso: updatedAt)
     }
 
     // MARK: - ホバーハイライト

@@ -211,7 +211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildStatusMenuItem() -> NSMenuItem {
         let statusMenuItem = NSMenuItem(title: "Status", action: nil, keyEquivalent: "")
         let statusMenu = NSMenu(title: "Status")
-        statusMenu.addItem(disabled: statusLabel)
+        statusMenu.addItem(disabled: appState.status.displayLabel)
         statusMenu.addItem(disabled: "Version: \(appState.currentVersion)")
         statusMenu.addItem(disabled: "Unread: \(appState.notifications.count)")
         statusMenu.addItem(disabled: "Review requests: \(appState.unreviewedPRs.count)")
@@ -234,15 +234,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         statusMenuItem.submenu = statusMenu
         return statusMenuItem
-    }
-
-    private var statusLabel: String {
-        switch appState.status {
-        case .idle:           return "Status: -"
-        case .loading:        return "Status: Loading..."
-        case .ok:             return "Status: OK"
-        case .error(let msg): return "Status: \(msg)"
-        }
     }
 
     // MARK: - アクション
