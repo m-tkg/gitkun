@@ -30,4 +30,17 @@ public enum FetchDiff {
         }
         return Array(prsByID.values.sorted { $0.updatedAt > $1.updatedAt }.prefix(limit))
     }
+
+    /// `excludeWIP` に応じて WIP フィルタ（`isReviewWaiting`）をかけ、最大 `limit` 件返す。
+    public static func reviewRequests(fetched: [UnreviewedPR],
+                                       excludeWIP: Bool,
+                                       limit: Int) -> [UnreviewedPR] {
+        let filtered = excludeWIP ? fetched.filter(\.isReviewWaiting) : fetched
+        return Array(filtered.prefix(limit))
+    }
+
+    /// assignee:@me の検索結果から Issue（`pullRequest` が nil）のみを抽出し、最大 `limit` 件返す。
+    public static func assignedIssues(from assigned: [AssignedItem], limit: Int) -> [AssignedItem] {
+        Array(assigned.filter { !$0.isPullRequest }.prefix(limit))
+    }
 }

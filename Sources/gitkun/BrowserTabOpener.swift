@@ -125,12 +125,9 @@ enum BrowserTabOpener {
 
         var result: [TabLocation] = []
         for i in 1...count {  // AppleScript の list は 1-based
-            guard let line = descriptor.atIndex(i)?.stringValue else { continue }
-            let parts = line.components(separatedBy: "\t")
-            guard parts.count == 3,
-                  let w = Int(parts[0]), let t = Int(parts[1]),
-                  let u = URL(string: parts[2]) else { continue }
-            result.append(TabLocation(windowIndex: w, tabIndex: t, url: u))
+            guard let line = descriptor.atIndex(i)?.stringValue,
+                  let parsed = GitHubTabMatcher.parseTabLine(line) else { continue }
+            result.append(TabLocation(windowIndex: parsed.windowIndex, tabIndex: parsed.tabIndex, url: parsed.url))
         }
         return result
     }

@@ -89,4 +89,30 @@ final class GitHubTabMatcherTests: XCTestCase {
             url("https://github.com/m-tkg/gitkun/commit/abc123"),
             url("https://github.com/m-tkg/gitkun/commit/def456")))
     }
+
+    // MARK: - parseTabLine
+
+    func testParseTabLineParsesValidLine() {
+        let result = GitHubTabMatcher.parseTabLine("2\t3\thttps://github.com/m-tkg/gitkun/pull/12")
+        XCTAssertEqual(result?.windowIndex, 2)
+        XCTAssertEqual(result?.tabIndex, 3)
+        XCTAssertEqual(result?.url, url("https://github.com/m-tkg/gitkun/pull/12"))
+    }
+
+    func testParseTabLineReturnsNilForMissingColumn() {
+        XCTAssertNil(GitHubTabMatcher.parseTabLine("2\thttps://github.com/m-tkg/gitkun/pull/12"))
+    }
+
+    func testParseTabLineReturnsNilForExtraColumn() {
+        XCTAssertNil(GitHubTabMatcher.parseTabLine("2\t3\thttps://github.com/m-tkg/gitkun/pull/12\textra"))
+    }
+
+    func testParseTabLineReturnsNilForNonNumericIndex() {
+        XCTAssertNil(GitHubTabMatcher.parseTabLine("x\t3\thttps://github.com/m-tkg/gitkun/pull/12"))
+        XCTAssertNil(GitHubTabMatcher.parseTabLine("2\ty\thttps://github.com/m-tkg/gitkun/pull/12"))
+    }
+
+    func testParseTabLineReturnsNilForInvalidURL() {
+        XCTAssertNil(GitHubTabMatcher.parseTabLine("2\t3\t"))
+    }
 }

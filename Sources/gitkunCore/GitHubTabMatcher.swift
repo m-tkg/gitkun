@@ -34,4 +34,14 @@ public enum GitHubTabMatcher {
     public static func matches(_ a: URL, _ b: URL) -> Bool {
         canonicalKey(a) == canonicalKey(b)
     }
+
+    /// AppleScript のタブ一覧行（`"windowIndex\ttabIndex\turl"`）を 1 行分パースする。
+    /// 列数が 3 でない、数値変換不可、URL 不正のいずれかであれば nil。
+    public static func parseTabLine(_ line: String) -> (windowIndex: Int, tabIndex: Int, url: URL)? {
+        let parts = line.components(separatedBy: "\t")
+        guard parts.count == 3,
+              let w = Int(parts[0]), let t = Int(parts[1]),
+              let u = URL(string: parts[2]) else { return nil }
+        return (w, t, u)
+    }
 }
