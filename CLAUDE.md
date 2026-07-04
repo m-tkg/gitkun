@@ -71,8 +71,9 @@ swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"
   （`gh pr view <番号> --json state,mergedAt`）。マージ済みのブランチへ push しても `main` には
   反映されない（孤立コミットになる）。マージ済みなら**最新 `main` から新ブランチを切り直し**、
   必要なら `Resources/Info.plist` の `CFBundleShortVersionString` を上げて別 PR を出す。
-- リリース用 Actions は `push: branches: [main]` で発火するため、**main への push がそのまま
-  リリースに直結する**。事故防止の意味でも main 直 push は避け、PR マージ経由にする。
+- リリース用 Actions は `push: tags: ["v*"]` で発火する。**main へのマージだけではリリースされず**、
+  `make release-tag` で `v<version>` タグを作成・push した時だけリリースが走る。事故防止の意味でも
+  main 直 push は避け、PR マージ経由にする。
 
 ---
 
@@ -80,9 +81,9 @@ swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"
 
 リリースは GitHub Actions（`.github/workflows/release.yml`）が担当する。
 
-- `main` に push されると、`Resources/Info.plist` の `CFBundleShortVersionString` を読み取り、
-  `v<version>` タグのリリースを自動作成する（同名リリースが既にあればスキップ）。
-  → **リリースは `CFBundleShortVersionString` を上げて `main` にマージするだけ**。
+- `v*` タグが push されると、そのタグに対応するリリースを自動作成する（同名リリースが既にあればスキップ）。
+  → **リリース手順は `Resources/Info.plist` の `CFBundleShortVersionString` を上げて `main` にマージし、
+  `make release-tag` で `v<version>` タグを作成・push する**（main へのマージだけではリリースされない）。
 - ビルド成果物（`gitkun.app` を zip 化）をリリースアセットとして添付。自己更新はこの zip を取得する。
 
 ### 署名・公証（Developer ID + notarization）
