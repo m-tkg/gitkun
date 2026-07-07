@@ -27,7 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // kuntraykun 連携: 管理対象なら自分のアイコンを隠し、showMenu でメニューを出す。
         let bridge = KuntraykunBridge(
             setHidden: { [weak self] hidden in self?.statusItem.isVisible = !hidden },
-            popUpMenu: { [weak self] point in self?.statusItem.menu?.popUp(positioning: nil, at: point, in: nil) }
+            popUpMenu: { [weak self] point in
+                // LSUIElement（バックグラウンド）のまま popUp すると表示に失敗することがある。
+                NSApp.activate(ignoringOtherApps: true)
+                self?.statusItem.menu?.popUp(positioning: nil, at: point, in: nil)
+            }
         )
         bridge.start()
         kuntraykunBridge = bridge

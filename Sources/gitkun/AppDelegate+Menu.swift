@@ -168,7 +168,11 @@ extension AppDelegate {
 
 extension AppDelegate: NSMenuDelegate {
     nonisolated func menuNeedsUpdate(_ menu: NSMenu) {
-        Task { @MainActor in self.buildMenu(menu) }
+        // NSMenu.popUp は menuNeedsUpdate を同期的に呼んだ直後に表示するため、
+        // 構築を Task に逃がすと空/1回遅れのメニューになる（kuntraykun 経由で
+        // メニューが出ない不具合の原因）。AppKit はメインスレッドで呼ぶ契約なので
+        // assumeIsolated で同期構築する。
+        MainActor.assumeIsolated { self.buildMenu(menu) }
     }
 }
 
