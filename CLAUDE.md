@@ -559,6 +559,13 @@ gitkun/
   画面表示は view が優先されるため見た目は変わらない）。
 - 仕様: kuntraykun リポジトリ `docs/kun-integration-protocol.md`、共通方針は `../CLAUDE_base.md`「Kuntraykun 連携」。
 - 管理対象フラグは kunkit が `UserDefaults`（キー `KuntraykunManaged`）に永続化する。
+- **kunkit の更新運用**: 連携プロトコルの変更・修正は kunkit 側（TDD）で行って semver タグを発行し、
+  各アプリは `swift package update kunkit` で追従する（`from: "1.0.0"` 指定のため 1.x は自動追従、
+  破壊的変更はメジャーを上げる）。本リポジトリは `Package.resolved` を追跡しているので、
+  更新時は resolved の変更もコミットする。
+- **連携のデバッグ**: まず `~/Library/Application Support/Kuntraykun/Menus/<基底ID>.json` の中身
+  （空なら書き出し側の問題）と、Console の subsystem `com.mtkg.gitkun` / category `kuntraykun` の
+  ログを確認する。
 - **kuntraykun 一覧用のアイコン**: kuntraykun は各アプリの `Contents/Resources/MenuBarIcon.png` を読んで一覧に表示する。
   SwiftPM 移行で Asset Catalog を廃止し、メニューバーアイコンは `Resources/*.png` を直接バンドルに同梱するように
   なったため、`Resources/MenuBarIcon.png` がそのまま kuntraykun 一覧用にも使われる（専用同梱は不要になった）。
