@@ -1,5 +1,6 @@
 import Foundation
 import gitkunCore
+import KunUpdateKit
 import OSLog
 
 private let logger = Logger(subsystem: logSubsystem, category: "GitHubNotificationService")
@@ -60,14 +61,20 @@ actor GitHubNotificationService {
                               label: "authored PRs")
     }
 
+    /// 最新リリース情報を取得する。
+    /// 他のフェッチと違い gh CLI ではなく kunkit の ETag 条件付き取得を使う
+    /// （304 は GitHub のレート制限を消費せず、gh の認証状態にも依存しない）。
+    /// レート制限時は `GitHubReleaseFetcher.RateLimitedError`（リセット時刻付き文言）が投げられる。
     func fetchLatestRelease() async throws -> ReleaseInfo {
-        try await fetch("/repos/\(Self.repoFullName)/releases/latest",
-                        as: ReleaseInfo.self,
-                        label: "latest release")
+        let fetcher = GitHubReleaseFetcher(repoFullName: Self.repoFullName, userAgent: Self.userAgent)
+        let data = try await fetcher.fetchLatestReleaseData()
+        return try decode(ReleaseInfo.self, from: data, label: "latest release")
     }
 
     /// 更新チェック対象リポジトリ（自分自身）。
     private static let repoFullName = "m-tkg/gitkun"
+    /// 更新チェックの User-Agent（GitHub API は必須。kun シリーズはアプリ名で統一）。
+    private static let userAgent = "gitkun"
 
     /// 指定タグのリリースから zip 資産を `directory` にダウンロードする。
     func downloadLatestReleaseZip(tag: String, into directory: URL) async throws {
