@@ -311,9 +311,9 @@ Bundle からファイルを読み、`isTemplate`（通常アイコンのみ tru
 - メニューの `Check for Updates…` でいつでも手動チェックできる（結果はダイアログで提示：最新／更新あり→インストール確認／失敗→エラー）
 - kunkit（`KunUpdateKit`）の `VersionComparator` がタグ（`v` プレフィックス可）と `CFBundleShortVersionString` を数値比較し、新しければ `AppState.availableUpdate`（`ReleaseInfo`）にセット
 - 更新を検知してもバナー通知は出さない（メニュー項目で知らせる）
-- メニューに `⬆ Update to vX.Y.Z…` 項目が出現（更新なし時は同じ位置に `Check for Updates…`）。実行すると `SelfUpdater` が:
-  1. `gh release download` で zip を取得
-  2. `ditto` で展開し、Bundle ID を検証
+- メニューに `⬆ Update to vX.Y.Z…` 項目が出現（更新なし時は同じ位置に `Check for Updates…`）。実行すると kunkit の `SelfUpdater`（`KunAppKit`、`SelfUpdater(appName: "gitkun")`）が:
+  1. リリースの公開 zip アセット（`browser_download_url`）を `URLSession` で取得（gh CLI 非依存）
+  2. `ditto` で展開し、**基底 Bundle ID**（`.local` を除く）で検証（ローカルビルドからも本番へ更新可）
   3. 旧プロセス終了を待って `.app` を入れ替える切り離しシェルスクリプトを起動し、自身は終了
 - 更新チェックの失敗はログのみで `status` には影響させない
 
@@ -432,20 +432,25 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | `AppDelegate+Menu.swift` | `AppDelegate` の extension。`NSMenu` 構築（`buildMenu` / `addSubmenu` / `buildGroupedNotificationItems` / `buildStatusMenuItem`）、`NSMenuDelegate` 準拠 |
 | `AppDelegate+Actions.swift` | `AppDelegate` の extension。メニューの各アクション（Refresh / Settings / 更新チェック・インストール / Quit 等）とダイアログ |
 | `AppState.swift` | `@MainActor ObservableObject`、状態管理、フェッチのオーケストレーション、通知発火（差分判定・マージは `FetchDiff` に委譲） |
-| `GitHubNotificationService.swift` | `actor`、`gh` CLI 実行、トークンキャッシュ、通知・未レビュー PR・assignee 検索・author 検索・リリース取得のフェッチ |
-| `ProcessRunner.swift` | 外部コマンド実行の共通ランナー（pipe ストリーム読みで deadlock 回避） |
+| `GitHubNotificationService.swift` | `actor`、`gh` CLI 実行（`KunSupport.ProcessRunner`）、トークンキャッシュ、通知・未レビュー PR・assignee 検索・author 検索のフェッチ。リリース取得は `KunUpdateKit.GitHubReleaseFetcher` |
 | `BrowserTabOpener.swift` | 既定ブラウザの既存タブ再利用（AppleScript）。判定ロジックは `gitkunCore` の `GitHubTabMatcher` に委譲 |
 | `Poller.swift` | `Timer` の closure ベースラッパー（通知ポーリングと更新チェックで2インスタンス使用） |
-| `SelfUpdater.swift` | 最新リリース zip の取得・展開・`.app` 入れ替え・再起動 |
 | `LocalStore.swift` | `UserDefaults` ラッパー |
 | `UserNotifier.swift` | `UNUserNotificationCenter`、通知クリックでブラウザ起動 |
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知・レビュー依頼・My PRs・Assigned Issues で共通利用、ドット色で区別） |
 | `SettingsView.swift` | 設定の SwiftUI ビュー（通知音 2 種（N/A で個別ミュート）・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ `SystemSounds`（システムサウンド列挙） |
 
-kuntraykun 連携（`KuntraykunBridge` / `KuntraykunIconExport` / `KuntraykunMenuExport`）は共有ライブラリ
-[kunkit](https://github.com/m-tkg/kunkit)（SPM 依存、`KunIntegrationBridge` プロダクト）が提供し、
-アプリ側に複製は持たない（「Kuntraykun 連携」章を参照）。
+共通ユーティリティは共有ライブラリ [kunkit](https://github.com/m-tkg/kunkit)（SPM 依存）に集約している。
+アプリ側に複製は持たない:
+- kuntraykun 連携（`KuntraykunBridge` / `KuntraykunIconExport` / `KuntraykunMenuExport`）: `KunIntegrationBridge`（「Kuntraykun 連携」章を参照）
+- 更新チェック・自己更新（`GitHubReleaseFetcher` / `ReleaseInfo` / `VersionComparator` / `KunUpdateSchedule` / `SelfUpdater`）: `KunUpdateKit` / `KunAppKit`
+- 外部コマンド実行（`ProcessRunner`）: `KunSupport`
+
+なお gitkun 固有の事情で **据え置いた**もの: 自動起動は `LaunchAtLoginManager`（`KunAppKit.LoginItemController` は SwiftUI 設定の
+バインディング API が変わり、gitkun にローカライズ基盤が無いため見送り）、設定永続化は `LocalStore` + `@AppStorage`
+（Codable な `Settings` 構造体を持たず `KunSettingsStore` に載らない）、多重起動防止は `GitkunApp.init`
+（SwiftUI `@main` で `main.swift` が無く `KunAppLaunch` の想定と異なる）。
 
 ### `Sources/gitkunCore/`（純粋ロジック。AppKit 非依存、テスト対象）
 
@@ -490,12 +495,12 @@ gitkun/
 │   │   ├── GitHubNotification.swift  GitHubTabMatcher.swift  MenuBarIcon.swift
 │   │   ├── MenuRowDisplayable.swift  NotificationGrouping.swift  RelativeTime.swift
 │   │   └── SearchModels.swift  SystemSoundNames.swift  URLResolver.swift
-│   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine/kunkit 依存。15 ファイル）
+│   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine/kunkit 依存。13 ファイル）
 │       ├── AppDelegate.swift  AppDelegate+Actions.swift  AppDelegate+Menu.swift
 │       ├── AppState.swift  BrowserTabOpener.swift  GitHubNotificationService.swift
 │       ├── gitkunApp.swift  LaunchAtLoginManager.swift  LocalStore.swift
-│       ├── NotificationMenuItemView.swift  Poller.swift  ProcessRunner.swift
-│       └── SelfUpdater.swift  SettingsView.swift  UserNotifier.swift
+│       ├── NotificationMenuItemView.swift  Poller.swift  SettingsView.swift
+│       └── UserNotifier.swift
 └── Tests/
     └── gitkunCoreTests/     # ユニットテスト（@testable import gitkunCore。アプリは起動しない）
         └── *Tests.swift

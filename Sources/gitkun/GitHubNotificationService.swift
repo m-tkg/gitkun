@@ -1,5 +1,6 @@
 import Foundation
 import gitkunCore
+import KunSupport
 import KunUpdateKit
 import OSLog
 
@@ -75,20 +76,6 @@ actor GitHubNotificationService {
     private static let repoFullName = "m-tkg/gitkun"
     /// 更新チェックの User-Agent（GitHub API は必須。kun シリーズはアプリ名で統一）。
     private static let userAgent = "gitkun"
-
-    /// 指定タグのリリースから zip 資産を `directory` にダウンロードする。
-    func downloadLatestReleaseZip(tag: String, into directory: URL) async throws {
-        let ghPath = try requireGHPath()
-        let token = try await resolveToken(ghPath: ghPath)
-        logger.info("Downloading release \(tag, privacy: .public)")
-        _ = try await runProcess(executable: ghPath,
-                                 arguments: ["release", "download", tag,
-                                             "--repo", Self.repoFullName,
-                                             "--pattern", "*.zip",
-                                             "--dir", directory.path,
-                                             "--clobber"],
-                                 token: token)
-    }
 
     // MARK: - フェッチ共通
 
