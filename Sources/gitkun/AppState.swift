@@ -1,6 +1,7 @@
 import Foundation
 import gitkunCore
 import Combine
+import KunUpdateKit
 import OSLog
 
 private let logger = Logger(subsystem: logSubsystem, category: "AppState")
@@ -37,7 +38,9 @@ final class AppState: ObservableObject {
     let launchManager = LaunchAtLoginManager()
     private let selfUpdater: SelfUpdater
 
-    private static let updateCheckInterval = 3600
+    /// 定期更新チェックの間隔（秒）。kunkit の共通スケジュール（6時間）に従う。
+    /// `Poller` は Int 秒で受けるため TimeInterval を丸める。
+    private static var updateCheckInterval: Int { Int(KunUpdateSchedule.checkInterval) }
 
     /// メニューに保持する通知・レビュー依頼の上限件数。
     static let displayLimit = 20

@@ -1,5 +1,6 @@
 import AppKit
 import gitkunCore
+import KunUpdateKit
 
 // MARK: - メニュー構築
 
