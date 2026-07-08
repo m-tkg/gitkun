@@ -1,6 +1,7 @@
 import Foundation
 import gitkunCore
 import Combine
+import KunAppKit
 import KunUpdateKit
 import OSLog
 
@@ -55,7 +56,8 @@ final class AppState: ObservableObject {
     // MARK: - 初期化
 
     init() {
-        self.selfUpdater = SelfUpdater(service: service)
+        // 更新の DL・展開・入替・再起動は kunkit の共通実装（URLSession で公開アセットを DL）。
+        self.selfUpdater = SelfUpdater(appName: "gitkun")
     }
 
     /// 通知ポーリングと更新チェックを開始する。どちらも開始時に即時 1 回発火する。
