@@ -92,6 +92,9 @@ extension AppDelegate {
         } else {
             for item in items.prefix(AppState.displayLimit) {
                 let menuItem = NSMenuItem()
+                // view があるため title は画面に出ないが、kuntraykun 連携 v4 のスナップショット
+                // （カスタムビューはタイトルのみ・操作不可で書き出す）に使われる。
+                menuItem.title = "\(item.repoFullName): \(item.displayTitle)"
                 menuItem.view = NotificationMenuItemView(
                     repoFullName: item.repoFullName,
                     title: item.displayTitle,

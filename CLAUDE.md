@@ -428,7 +428,7 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | ファイル | 役割 |
 |---|---|
 | `gitkunApp.swift` | `@main`、`NSApplicationDelegateAdaptor`、二重起動防止 |
-| `AppDelegate.swift` | `NSStatusItem` 管理、起動処理、アイコン切り替え（Combine）、`menuBarImage(named:)`、`KuntraykunBridge` の配線 |
+| `AppDelegate.swift` | `NSStatusItem` 管理、起動処理、アイコン切り替え（Combine）、`menuBarImage(named:)`、`KuntraykunBridge` の配線とメニュースナップショット書き出し（連携 v4） |
 | `AppDelegate+Menu.swift` | `AppDelegate` の extension。`NSMenu` 構築（`buildMenu` / `addSubmenu` / `buildGroupedNotificationItems` / `buildStatusMenuItem`）、`NSMenuDelegate` 準拠 |
 | `AppDelegate+Actions.swift` | `AppDelegate` の extension。メニューの各アクション（Refresh / Settings / 更新チェック・インストール / Quit 等）とダイアログ |
 | `AppState.swift` | `@MainActor ObservableObject`、状態管理、フェッチのオーケストレーション、通知発火（差分判定・マージは `FetchDiff` に委譲） |
@@ -442,8 +442,9 @@ macOS 14+ でセレクタ経由の表示がブロックされたため使わな�
 | `LaunchAtLoginManager.swift` | `SMAppService`（macOS 13+） |
 | `NotificationMenuItemView.swift` | 行カスタムビュー（通知・レビュー依頼・My PRs・Assigned Issues で共通利用、ドット色で区別） |
 | `SettingsView.swift` | 設定の SwiftUI ビュー（通知音 2 種（N/A で個別ミュート）・WIP 除外・Launch at login・現在/最新バージョン表示。AppDelegate が NSWindow で表示）+ `SystemSounds`（システムサウンド列挙） |
-| `KuntraykunBridge.swift` | kuntraykun 連携ブリッジ（`sync`/`showMenu` 分散通知の観測、アイコン表示/非表示の判定、アップデート有無の報告） |
+| `KuntraykunBridge.swift` | kuntraykun 連携ブリッジ（`sync`/`showMenu`/`requestMenu`/`invokeMenuItem` 分散通知の観測、アイコン表示/非表示の判定、アップデート有無の報告） |
 | `KuntraykunIconExport.swift` | 現在のメニューバーアイコンを kuntraykun 一覧用の共有ディレクトリへ PNG 書き出し（連携 v2） |
+| `KuntraykunMenuExport.swift` | メニュー構造を JSON で kuntraykun 用の共有ファイルへ書き出し・項目 ID の実行（連携 v4、サブメニュー表示用） |
 
 ### `Sources/gitkunCore/`（純粋ロジック。AppKit 非依存、テスト対象）
 
@@ -491,13 +492,13 @@ gitkun/
 │   │   ├── MenuRowDisplayable.swift  NotificationGrouping.swift  RelativeTime.swift
 │   │   ├── ReleaseInfo.swift  SearchModels.swift  SystemSoundNames.swift
 │   │   └── URLResolver.swift  VersionComparator.swift
-│   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine 依存。17 ファイル）
+│   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine 依存。18 ファイル）
 │       ├── AppDelegate.swift  AppDelegate+Actions.swift  AppDelegate+Menu.swift
 │       ├── AppState.swift  BrowserTabOpener.swift  GitHubNotificationService.swift
 │       ├── gitkunApp.swift  KuntraykunBridge.swift  KuntraykunIconExport.swift
-│       ├── LaunchAtLoginManager.swift  LocalStore.swift  NotificationMenuItemView.swift
-│       ├── Poller.swift  ProcessRunner.swift  SelfUpdater.swift
-│       └── SettingsView.swift  UserNotifier.swift
+│       ├── KuntraykunMenuExport.swift  LaunchAtLoginManager.swift  LocalStore.swift
+│       ├── NotificationMenuItemView.swift  Poller.swift  ProcessRunner.swift
+│       └── SelfUpdater.swift  SettingsView.swift  UserNotifier.swift
 └── Tests/
     └── gitkunCoreTests/     # ユニットテスト（@testable import gitkunCore。アプリは起動しない）
         └── *Tests.swift
@@ -556,3 +557,14 @@ gitkun/
   設定する箇所すべて（起動時＋4状態の `combineLatest` sink）で現在アイコンを
   `~/Library/Application Support/Kuntraykun/MenuBarIcons/<基底ID>.png` に書き出す（テンプレートは `.template` マーカー併記）。
   kuntraykun はこれを優先して読むため、gitkun の状態色がそのまま一覧に出る。
+- **メニュースナップショットの共有（v4）**: kuntraykun のプルダウンに gitkun のメニューをサブメニューとして
+  表示させるため、`KuntraykunMenuExport.export(_:)`（`Sources/gitkun/KuntraykunMenuExport.swift`）でメニュー構造を
+  JSON で `~/Library/Application Support/Kuntraykun/Menus/<基底ID>.json` へ原子的に書き出し、`menuSnapshot`
+  分散通知で知らせる。`KuntraykunBridge` が `requestMenu`（書き出し依頼）と `invokeMenuItem`（項目実行依頼。
+  世代一致時のみ `performActionForItem` で実行）を観測する。
+  - 書き出しタイミング: 起動時 / `requestMenu` 受信時 / `AppState.objectWillChange` の debounce（メニュー内容は
+    AppState 由来で動的に変わるため）/ `invokeMenuItem` 実行後。
+  - `export` は `menu.update()` → `menuNeedsUpdate` の同期再構築を伴うため、**メニュー表示中は書き出さず保留**し、
+    `menuDidClose` 後に書き出す（`AppDelegate` の `isMenuOpen` / `menuExportPending`）。
+  - カスタムビュー行（`NotificationMenuItemView`）はビューを転送できないため**タイトルのみ・操作不可**で書き出す
+    （`NSMenuItem.title` に「repo: タイトル」を設定してあり、画面表示は view が優先されるため見た目は変わらない）。
