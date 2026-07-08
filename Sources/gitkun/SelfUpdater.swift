@@ -1,5 +1,6 @@
 import AppKit
 import gitkunCore
+import KunUpdateKit
 import OSLog
 
 private let logger = Logger(subsystem: logSubsystem, category: "SelfUpdater")

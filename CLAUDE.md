@@ -307,9 +307,9 @@ Bundle からファイルを読み、`isTemplate`（通常アイコンのみ tru
 
 ## 更新チェック・自己更新
 
-- 起動時に1回、以降は約1時間ごとに `gh api /repos/m-tkg/gitkun/releases/latest` で最新リリースを確認（`Poller` の第2インスタンス）。手動 Refresh 時にも確認する
+- 起動時に1回、以降は 6 時間ごと（kunkit の共通スケジュール `KunUpdateSchedule.checkInterval`）に最新リリースを確認（`Poller` の第2インスタンス）。手動 Refresh 時にも確認する。取得は kunkit の `GitHubReleaseFetcher`（ETag 条件付き・304 はレート制限を消費しない）
 - メニューの `Check for Updates…` でいつでも手動チェックできる（結果はダイアログで提示：最新／更新あり→インストール確認／失敗→エラー）
-- `VersionComparator` がタグ（`v` プレフィックス可）と `CFBundleShortVersionString` を数値比較し、新しければ `AppState.availableUpdate` にセット
+- kunkit（`KunUpdateKit`）の `VersionComparator` がタグ（`v` プレフィックス可）と `CFBundleShortVersionString` を数値比較し、新しければ `AppState.availableUpdate`（`ReleaseInfo`）にセット
 - 更新を検知してもバナー通知は出さない（メニュー項目で知らせる）
 - メニューに `⬆ Update to vX.Y.Z…` 項目が出現（更新なし時は同じ位置に `Check for Updates…`）。実行すると `SelfUpdater` が:
   1. `gh release download` で zip を取得
@@ -453,8 +453,6 @@ kuntraykun 連携（`KuntraykunBridge` / `KuntraykunIconExport` / `KuntraykunMen
 |---|---|
 | `GitHubNotification.swift` | 通知モデル（`GitHubNotification`）、`NotificationReason`、`NotificationSubjectType`、`pullRequestKey` |
 | `SearchModels.swift` | Search API モデル（`UnreviewedPR`, `AssignedItem`, `SearchResponse`）、`RepositoryURLContaining` |
-| `ReleaseInfo.swift` | リリース情報モデル（更新チェック用） |
-| `VersionComparator.swift` | タグ ⇔ `CFBundleShortVersionString` の数値比較 |
 | `AppStatus.swift` | `AppStatus`、`PollingIntervalPolicy`（ポーリング間隔の解決） |
 | `AppError.swift` | `AppError`（フェッチ・パースエラー種別） |
 | `FetchErrors.swift` | 複数フェッチの `Result` を集約する `FetchErrors` |
@@ -487,12 +485,11 @@ gitkun/
 │   ├── MenuBarIconUnreview.png          # 未レビューあり（色付き、32px）
 │   └── MenuBarIconUnreadAndUnreview.png # 両方あり（色付き、32px）
 ├── Sources/
-│   ├── gitkunCore/          # 純粋ロジック（テスト対象、AppKit 非依存。15 ファイル）
+│   ├── gitkunCore/          # 純粋ロジック（テスト対象、AppKit 非依存。13 ファイル）
 │   │   ├── AppError.swift  AppStatus.swift  FetchDiff.swift  FetchErrors.swift
 │   │   ├── GitHubNotification.swift  GitHubTabMatcher.swift  MenuBarIcon.swift
 │   │   ├── MenuRowDisplayable.swift  NotificationGrouping.swift  RelativeTime.swift
-│   │   ├── ReleaseInfo.swift  SearchModels.swift  SystemSoundNames.swift
-│   │   └── URLResolver.swift  VersionComparator.swift
+│   │   └── SearchModels.swift  SystemSoundNames.swift  URLResolver.swift
 │   └── gitkun/             # 実行ファイル本体（AppKit/SwiftUI/Combine/kunkit 依存。15 ファイル）
 │       ├── AppDelegate.swift  AppDelegate+Actions.swift  AppDelegate+Menu.swift
 │       ├── AppState.swift  BrowserTabOpener.swift  GitHubNotificationService.swift
@@ -506,7 +503,7 @@ gitkun/
 
 ### テスト
 
-- テスト対象は `gitkunCore` ターゲットの純粋ロジック（上表の15ファイル）。テストは `@testable import gitkunCore` でアクセスする
+- テスト対象は `gitkunCore` ターゲットの純粋ロジック（上表の13ファイル）。テストは `@testable import gitkunCore` でアクセスする
   - アプリ（`gitkun` ターゲット）を起動しないため、テスト実行時に GitHub ポーリングや通知権限ダイアログが発生しない
   - 新たにテスト対象のロジックを増やす場合は、AppKit 非依存なら `Sources/gitkunCore/` に置く。app から使う型は `public` 化する（テストは `@testable` なので internal でも見える）
 - 実行は `swift test`
