@@ -10,7 +10,7 @@ macOS のメニューバーに常駐し、GitHub の未読通知と「自分に�
 - メニュー項目クリックでブラウザが開く。既定ブラウザが Safari / Chrome 系なら、同じ PR / Issue を
   表示している既存タブがあればそれをアクティブにする（新規タブを増やさない）
 - draft PR・タイトル先頭 `[WIP]`・`wip` ラベルの PR は Review Requests から除外（設定で ON/OFF 可）
-- 約1時間ごとに自リポジトリの最新リリースを確認し、新バージョンがあればメニューから自己更新できる
+- 定期的に自リポジトリの最新リリースを確認し、新バージョンがあればメニューから自己更新できる
 
 ## 動作要件
 
@@ -54,7 +54,7 @@ open gitkun.app
 それ以外のセクションも件数付きのサブメニューで一覧を表示する。
 
 ```
-gitkun v1.12.1                    ← 現在バージョン（操作不可）
+gitkun vX.Y.Z                     ← 現在バージョン（操作不可）
 ────────────────────
 Review Requested (1) ▶            ← 通知カテゴリ（サブメニュー）
 Mentioned (2) ▶
@@ -67,7 +67,7 @@ Assigned Issues (N) ▶             ← assignee:@me の Issue
 ────────────────────
 Status ▶                          ← サブメニュー
   Status: OK
-  Version: 1.12.1
+  Version: X.Y.Z
   Unread: 2
   Review requests: 1
   My PRs: 3

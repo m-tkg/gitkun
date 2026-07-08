@@ -1,112 +1,44 @@
-# CLAUDE.md
+# CLAUDE.md — gitkun
+
+このリポジトリで作業する際のガイド。
+
+**メニューバー常駐アプリ（kun シリーズ）共通の方針は上位ディレクトリの [`../CLAUDE_base.md`](../CLAUDE_base.md) を参照**
+（Swift Package 構成・日英ローカライズ・アップデート/ログイン項目・kunkit 連携・リリース手順（`make release-tag`）・
+署名/公証・ブランチ運用・開発の進め方など）。共通方針を変えるときは `CLAUDE_base.md`
+（[kun-template](https://github.com/m-tkg/kun-template) が canonical）を編集する。本ファイルには gitkun 固有の事項のみを記す。
+
+---
+
+# gitkun 固有事項
 
 ## プロジェクト概要
 
-gitkun は、macOS のメニューバーに常駐し、GitHub の未読通知と「レビュアーとして自分に review request が来ている未マージ PR」を定期的にチェックして、新規分をユーザーに知らせる軽量なユーティリティアプリである。加えて、自分が assignee または author の open PR（My PRs）と、自分にアサインされている open Issue の一覧をメニューから参照できる。
+gitkun は、macOS のメニューバーに常駐し、GitHub の未読通知と「レビュアーとして自分に review request が来ている未マージ PR」を定期的にチェックして、新規分をユーザーに知らせる軽量なユーティリティアプリである。加えて、自分が assignee または author の open PR（My PRs）と、自分にアサインされている open Issue の一覧をメニューから参照できる。bundle ID は `com.mtkg.gitkun`。
 
-個人利用を前提とした MVP とし、シンプルで安定した動作を最優先とする。
+個人利用を前提とした MVP とし、シンプルで安定した動作を最優先とする。App Store 配布や sandbox 制約は考慮しない。
 
----
+- **`gh` CLI が前提**: `/opt/homebrew/bin/gh` または `/usr/local/bin/gh` にインストール済みで `gh auth login` 完了していること。
+- ターゲットは `gitkunCore`（純粋ロジック・テスト対象）＋ `gitkun`（App。AppKit / Combine / SwiftUI 依存）。
+- SwiftUI は `gitkunApp.swift` の Settings シーン・`SettingsView` のみ。UI 本体は AppKit（NSStatusItem / NSMenu）。
 
-## 前提条件
+## ビルド・テスト
 
-- macOS 13 Ventura 以降
-- Swift toolchain がインストール済みであること（`swift build` / `swift test` が使えること。Xcode 本体は不要だが Command Line Tools は必要）
-- `gh` CLI がインストール済みであること（`/opt/homebrew/bin/gh` または `/usr/local/bin/gh`）
-- `gh auth login` が完了していること
-- App Store 配布や sandbox 制約は考慮しない
-
----
-
-## 技術スタック
-
-- Swift Package Manager（swift-tools-version 5.9、Xcode/xcodeproj は使わない）
-- AppKit（NSStatusItem、NSMenu、アイコン切り替え、音声再生、ブラウザ起動）
-- SwiftUI（gitkunApp.swift の Settings シーン・SettingsView のみ）
-- async/await + Combine
-- OSLog（ロギング）
-
-対応OSは macOS 13+ のみ。後方互換性は考慮しない。
-
-ビルドは whisperkun / snapperkun と同様、SwiftPM + `Scripts/bundle.sh`（.app を手組み）で行う。
-`.app` バンドルは bundle.sh が `swift build` の成果物・`Resources/` のアイコン・`Info.plist` から組み立てる。
-
----
-
-## ビルド・実行
-
-Makefile は廃止。`swift` コマンドと `Scripts/bundle.sh` を直接使う。
+共通のビルド方針は base 参照。gitkun 固有のターゲット名・コマンドは以下。
 
 ```bash
-# ビルド（Debug）
-swift build
+swift build                       # ビルド（Debug）
+swift test                        # ユニットテスト（gitkunCoreTests のみ。アプリは起動しない）
+bash Scripts/bundle.sh release    # .app を組み立て（Release・ad-hoc 署名）
 
-# ユニットテスト（gitkunCoreTests）
-swift test
-
-# .app を組み立て（Release・ad-hoc 署名）
-bash Scripts/bundle.sh release
-
-# ローカル検証用 .app（本番と TCC 権限を分離した「gitkun (Local)」を生成して起動）
+# ローカル検証用（本番と TCC 権限を分離した「gitkun (Local)」を生成して起動）
 pkill -x gitkun 2>/dev/null; LOCAL=1 bash Scripts/bundle.sh debug && open "gitkun (Local).app"
 
-# ビルド成果物削除
-swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"
+swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"  # 成果物削除
 ```
 
-`bash Scripts/bundle.sh release` はローカル向けの **ad-hoc 署名**ビルド。配布用の署名・公証は CI が行う（後述）。
-`LOCAL=1` を付けると bundle ID を `com.mtkg.gitkun.local` に分け、本番アプリと
-オートメーション(TCC)権限が衝突しないようにする。`SIGN_IDENTITY="Apple Development: …"` を併用すると
-ローカルでも安定署名になり、再ビルドのたびに権限を取り直さずに済む。
-
----
-
-## ブランチ運用（必須）
-
-- **`main` ブランチへ直接コミット / push しない。** 変更は必ず Pull Request 経由で行う。
-- 作業ブランチは**必ずその時点の最新の `main` から切る**
-  （`git fetch origin && git switch main && git pull --ff-only` してから分岐）。
-- PR は `gh pr create` で作成し、マージはレビュー後に行う（GitHub 操作は `gh` を使う）。
-- **PR 作成後に追加修正するときは、まずその PR がマージ済みでないか確認する**
-  （`gh pr view <番号> --json state,mergedAt`）。マージ済みのブランチへ push しても `main` には
-  反映されない（孤立コミットになる）。マージ済みなら**最新 `main` から新ブランチを切り直し**、
-  必要なら `Resources/Info.plist` の `CFBundleShortVersionString` を上げて別 PR を出す。
-- リリース用 Actions は `push: tags: ["v*"]` で発火する。**main へのマージだけではリリースされず**、
-  `make release-tag` で `v<version>` タグを作成・push した時だけリリースが走る。事故防止の意味でも
-  main 直 push は避け、PR マージ経由にする。
-
----
-
-## リリース・署名・配布
-
-リリースは GitHub Actions（`.github/workflows/release.yml`）が担当する。
-
-- `v*` タグが push されると、そのタグに対応するリリースを自動作成する（同名リリースが既にあればスキップ）。
-  → **リリース手順は `Resources/Info.plist` の `CFBundleShortVersionString` を上げて `main` にマージし、
-  `make release-tag` で `v<version>` タグを作成・push する**（main へのマージだけではリリースされない）。
-- ビルド成果物（`gitkun.app` を zip 化）をリリースアセットとして添付。自己更新はこの zip を取得する。
-
-### 署名・公証（Developer ID + notarization）
-
-- 配布版は **Developer ID Application 証明書**（Team ID `G72M73C546`）で署名し、**公証（notarization）+ staple** する。
-  `Scripts/bundle.sh` が `SIGN_IDENTITY` 環境変数で Developer ID 署名まで行う（CI は証明書を一時キーチェーンに
-  import してから `SIGN_IDENTITY` を渡す）。`SIGN_IDENTITY` 未設定なら ad-hoc 署名にフォールバックする。
-  bundle.sh は ad-hoc / Developer ID どちらの分岐でも
-  `codesign --options runtime --timestamp --entitlements Resources/gitkun.entitlements` 相当を実行する
-  （`--entitlements` を渡さないと apple-events entitlement が剥がれるため必須。
-  CI には剥がれを検知する `Verify signing and entitlements` ステップもある）。
-- **安定署名でなければアップデート越しに自動化(TCC)権限が保持されない**。ad-hoc はビルドごとに署名が
-  変わり、更新のたびにブラウザ制御の許可を取り直す羽目になる。公証すれば Gatekeeper 警告も消え、他人にも配布可能。
-- 署名・公証情報は GitHub の **Secrets 6 つ**で CI に渡す。**Secrets 未設定時は ad-hoc 署名（公証スキップ）に
-  フォールバック**する。
-
-  | 用途 | Secret |
-  |---|---|
-  | 署名 | `SIGNING_IDENTITY` / `SIGNING_CERTIFICATE_PASSWORD` / `SIGNING_CERTIFICATE_P12_BASE64` |
-  | 公証 | `NOTARY_APPLE_ID` / `NOTARY_PASSWORD` / `NOTARY_TEAM_ID` |
-
-  snapperkun / whisperkun 等と同じ Apple Developer アカウントなら、それらに登録済みの 6 値をそのまま流用できる
-  （証明書の新規発行は不要）。登録手順・移行時の権限再許可の詳細は **`docs/SIGNING.md`** を参照。
+リリースは `Resources/Info.plist` の `CFBundleShortVersionString` を上げて `main` にマージ後、`make release-tag`
+（ベータは `make beta-tag`）でタグを push すると CI が署名・公証してリリースする（手順は base 参照）。
+`docs/SIGNING.md` に署名・公証の詳細と権限再許可の注意がある。
 
 ---
 
@@ -123,7 +55,7 @@ swift package clean; rm -rf .build "gitkun.app" "gitkun (Local).app"
 - 項目クリックでブラウザ遷移（クリックで一覧から即削除はしない）。通知だけはクリック時に refresh を実行し、GitHub 側で既読になった通知が次フェッチで一覧から消える。レビュー依頼 / My PRs / Assigned Issues は次ポーリングの再取得で更新
 - ブラウザ遷移は `BrowserTabOpener` が担う。既定ブラウザが Safari / Chrome 系（Chromium 系ブラウザも対応）で、同じ PR / Issue を表示している既存タブが既にあればそのタブをアクティブにする（新規タブを増やさない）。未対応ブラウザ・未起動・タブ未検出・自動化権限拒否などの場合は `NSWorkspace` で通常どおり新規に開く（詳細は「URL 解決」節）
 - **未読/未レビューの組み合わせに応じてメニューバーアイコンが4通りに切り替わる**（My PRs / Assigned Issues はアイコン状態に影響しない）
-- 約1時間ごとに自リポジトリ（`m-tkg/gitkun`）の最新リリースを確認し、新バージョンがあればメニュー項目から自己更新できる（バナー通知はしない。後述「更新チェック・自己更新」）
+- 定期的（6時間ごと）に自リポジトリ（`m-tkg/gitkun`）の最新リリースを確認し、新バージョンがあればメニュー項目から自己更新できる（バナー通知はしない。後述「更新チェック・自己更新」）
 
 ### 未レビュー PR の WIP フィルタ
 
