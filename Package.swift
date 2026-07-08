@@ -7,8 +7,8 @@ let package = Package(
         .macOS(.v13)
     ],
     dependencies: [
-        // kuntraykun 連携（プロトコル定数・Bridge・アイコン/メニュー書き出し）の共有ライブラリ。
-        .package(url: "https://github.com/m-tkg/kunkit.git", from: "1.0.0")
+        // kuntraykun 連携と更新チェック（ETag 条件付き取得）の共有ライブラリ。
+        .package(url: "https://github.com/m-tkg/kunkit.git", from: "1.1.0")
     ],
     targets: [
         // 純粋ロジック（テスト対象）: AppKit/Combine/UserNotifications に依存しないモデル・計算
@@ -21,6 +21,7 @@ let package = Package(
             dependencies: [
                 "gitkunCore",
                 .product(name: "KunIntegrationBridge", package: "kunkit"),
+                .product(name: "KunUpdateKit", package: "kunkit"),
             ]
         ),
         .testTarget(
