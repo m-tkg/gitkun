@@ -2,7 +2,7 @@
 
 このリポジトリで作業する際のガイド。
 
-**メニューバー常駐アプリ（kun シリーズ）共通の方針は上位ディレクトリの [`../CLAUDE_base.md`](../CLAUDE_base.md) を参照**
+**メニューバー常駐アプリ（kun シリーズ）共通の方針は上位ディレクトリの [`../kun-template/CLAUDE_base.md`](../kun-template/CLAUDE_base.md) を参照**
 （Swift Package 構成・日英ローカライズ・アップデート/ログイン項目・kunkit 連携・リリース手順（`make release-tag`）・
 署名/公証・ブランチ運用・開発の進め方など）。共通方針を変えるときは `CLAUDE_base.md`
 （[kun-template](https://github.com/m-tkg/kun-template) が canonical）を編集する。本ファイルには gitkun 固有の事項のみを記す。
@@ -491,7 +491,7 @@ gitkun/
 - カスタムビュー行（`NotificationMenuItemView`）は v4 スナップショットに**タイトルのみ・操作不可**で書き出される
   （`AppDelegate+Menu.swift` で `NSMenuItem.title` に「repo: タイトル」を設定してあり、
   画面表示は view が優先されるため見た目は変わらない）。
-- 仕様: kuntraykun リポジトリ `docs/kun-integration-protocol.md`、共通方針は `../CLAUDE_base.md`「Kuntraykun 連携」。
+- 仕様: kuntraykun リポジトリ `docs/kun-integration-protocol.md`、共通方針は `../kun-template/CLAUDE_base.md`「Kuntraykun 連携」。
 - 管理対象フラグは kunkit が `UserDefaults`（キー `KuntraykunManaged`）に永続化する。
 - **kuntraykun 一覧用のアイコン**: kuntraykun は各アプリの `Contents/Resources/MenuBarIcon.png` を読んで一覧に表示する。
   SwiftPM 移行で Asset Catalog を廃止し、メニューバーアイコンは `Resources/*.png` を直接バンドルに同梱するように
