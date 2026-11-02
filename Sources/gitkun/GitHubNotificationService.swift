@@ -16,6 +16,10 @@ actor GitHubNotificationService {
         return d
     }()
 
+    /// kunkit の `ReleaseInfo` 用デコーダ。`ReleaseInfo` は CodingKeys で snake_case キー
+    /// （`tag_name` 等）を明示しているため、`convertFromSnakeCase` と併用すると keyNotFound になる。
+    private static let releaseDecoder = JSONDecoder()
+
     /// `gh` の探索先ディレクトリ。`findGHPath()` の候補パスと `baseEnv()` の PATH の両方がここから導出される。
     private static let ghSearchDirectories = [
         "/opt/homebrew/bin",
@@ -73,7 +77,7 @@ actor GitHubNotificationService {
     func fetchLatestRelease() async throws -> ReleaseInfo {
         let fetcher = GitHubReleaseFetcher(repoFullName: Self.repoFullName, userAgent: Self.userAgent)
         let data = try await fetcher.fetchLatestReleaseData()
-        return try decode(ReleaseInfo.self, from: data, label: "latest release")
+        return try decode(ReleaseInfo.self, from: data, label: "latest release", using: Self.releaseDecoder)
     }
 
     /// 更新チェック対象リポジトリ（自分自身）。
@@ -126,9 +130,10 @@ actor GitHubNotificationService {
                                     token: token)
     }
 
-    private func decode<T: Decodable>(_ type: T.Type, from data: Data, label: String) throws -> T {
+    private func decode<T: Decodable>(_ type: T.Type, from data: Data, label: String,
+                                      using decoder: JSONDecoder = GitHubNotificationService.decoder) throws -> T {
         do {
-            let decoded = try Self.decoder.decode(T.self, from: data)
+            let decoded = try decoder.decode(T.self, from: data)
             if let count = (decoded as? any Collection)?.count {
                 logger.info("Fetched \(count) \(label, privacy: .public)")
             } else {
