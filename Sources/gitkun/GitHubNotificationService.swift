@@ -47,9 +47,13 @@ actor GitHubNotificationService {
 
     /// 未レビュー PR を取得する。draft / WIP の除外は呼び出し側（AppState）の設定で行う。
     func fetchUnreviewedPRs() async throws -> [UnreviewedPR] {
-        try await fetchSearch(
-            "/search/issues?q=is:open+is:pr+review-requested:@me&per_page=50",
-            label: "unreviewed PRs")
+        async let personal: [UnreviewedPR] = fetchSearch(
+            "/search/issues?q=is:open+is:pr+user-review-requested:@me&sort=updated&order=desc&per_page=50",
+            label: "personal review requests")
+        async let team: [UnreviewedPR] = fetchSearch(
+            "/search/issues?q=is:open+is:pr+team-review-requested-user:@me&sort=updated&order=desc&per_page=50",
+            label: "team review requests")
+        return try await FetchDiff.mergeReviewRequests(personal: personal, team: team)
     }
 
     func fetchAssignedItems() async throws -> [AssignedItem] {

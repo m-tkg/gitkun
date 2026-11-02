@@ -43,7 +43,7 @@ final class AppState: ObservableObject {
     /// `Poller` は Int 秒で受けるため TimeInterval を丸める。
     private static var updateCheckInterval: Int { Int(KunUpdateSchedule.checkInterval) }
 
-    /// メニューに保持する通知・レビュー依頼の上限件数。
+    /// メニューに表示する通知・レビュー依頼の各一覧の上限件数。
     static let displayLimit = 20
     /// My PRs / Assigned Issues の保持上限件数。
     private static let itemLimit = 50
@@ -197,8 +197,7 @@ final class AppState: ObservableObject {
         let (newOnes, nextKnown) = FetchDiff.newItems(fetched: filtered, known: store.knownUnreviewedIDs)
         store.knownUnreviewedIDs = nextKnown
 
-        // 上の filtered は既に WIP フィルタ済みなので、ここでは prefix のみ適用（excludeWIP: false）。
-        unreviewedPRs = FetchDiff.reviewRequests(fetched: filtered, excludeWIP: false, limit: Self.displayLimit)
+        unreviewedPRs = filtered
 
         if isFirstFetch { return }
         notifyIfNew(newOnes, title: "GitHub Review Requests", soundName: store.reviewSoundName)

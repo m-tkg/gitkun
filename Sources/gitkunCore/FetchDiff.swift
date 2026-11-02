@@ -4,6 +4,25 @@ import Foundation
 /// 副作用を持たないため `AppState` から独立してテストできる。
 public enum FetchDiff {
 
+    /// 個人宛てとチーム宛ての検索結果を ID で統合し、両方に該当する依頼も保持する。
+    public static func mergeReviewRequests(personal: [UnreviewedPR], team: [UnreviewedPR]) -> [UnreviewedPR] {
+        var byID: [Int: UnreviewedPR] = [:]
+        for var pr in personal {
+            pr.isPersonalRequest = true
+            byID[pr.id] = pr
+        }
+        for var pr in team {
+            pr.isTeamRequest = true
+            if var existing = byID[pr.id] {
+                existing.isTeamRequest = true
+                byID[pr.id] = existing
+            } else {
+                byID[pr.id] = pr
+            }
+        }
+        return byID.values.sorted { $0.updatedAt > $1.updatedAt }
+    }
+
     /// `fetched` のうち `known` に含まれない ID を持つ要素（新規）と、
     /// 次回の既知 ID 集合（今回フェッチした全 ID）を返す。
     /// フェッチ結果から消えた ID は既知集合に残らない。
@@ -31,12 +50,10 @@ public enum FetchDiff {
         return Array(prsByID.values.sorted { $0.updatedAt > $1.updatedAt }.prefix(limit))
     }
 
-    /// `excludeWIP` に応じて WIP フィルタ（`isReviewWaiting`）をかけ、最大 `limit` 件返す。
-    public static func reviewRequests(fetched: [UnreviewedPR],
-                                       excludeWIP: Bool,
-                                       limit: Int) -> [UnreviewedPR] {
-        let filtered = excludeWIP ? fetched.filter(\.isReviewWaiting) : fetched
-        return Array(filtered.prefix(limit))
+    /// 個人宛てとチーム宛てのそれぞれに表示上限を適用する。
+    public static func reviewRequests(fetched: [UnreviewedPR], limit: Int) -> (personal: [UnreviewedPR], team: [UnreviewedPR]) {
+        (Array(fetched.filter(\.isPersonalRequest).prefix(limit)),
+         Array(fetched.filter(\.isTeamRequest).prefix(limit)))
     }
 
     /// assignee:@me の検索結果から Issue（`pullRequest` が nil）のみを抽出し、最大 `limit` 件返す。

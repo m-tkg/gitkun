@@ -10,6 +10,7 @@ macOS のメニューバーに常駐し、GitHub の未読通知と「自分に�
 - メニュー項目クリックでブラウザが開く。既定ブラウザが Safari / Chrome 系なら、同じ PR / Issue を
   表示している既存タブがあればそれをアクティブにする（新規タブを増やさない）
 - draft PR・タイトル先頭 `[WIP]`・`wip` ラベルの PR は Review Requests から除外（設定で ON/OFF 可）
+- Review Requests は個人宛てと所属チーム宛てに各20件まで表示（両方に依頼された PR は両方に表示）
 - 定期的に自リポジトリの最新リリースを確認し、新バージョンがあればメニューから自己更新できる
 
 ## 動作要件
@@ -61,7 +62,8 @@ Mentioned (2) ▶
 Commented (3) ▶
 ...
 ────────────────────
-Review Requests (N) ▶             ← レビュー依頼中の PR
+Review Requests: Personal (N) ▶   ← 個人宛て
+Review Requests: Team (N) ▶       ← 所属チーム宛て
 My PRs (N) ▶                      ← assignee:@me + author:@me
 Assigned Issues (N) ▶             ← assignee:@me の Issue
 ────────────────────

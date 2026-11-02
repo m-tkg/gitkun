@@ -11,6 +11,12 @@ public struct UnreviewedPR: Decodable, Identifiable, RepositoryURLContaining {
     public let updatedAt: String
     public let draft: Bool
     public let labels: [Label]
+    public var isPersonalRequest = false
+    public var isTeamRequest = false
+
+    private enum CodingKeys: String, CodingKey {
+        case id, number, title, htmlUrl, repositoryUrl, updatedAt, draft, labels
+    }
 
     public struct Label: Decodable {
         public let name: String

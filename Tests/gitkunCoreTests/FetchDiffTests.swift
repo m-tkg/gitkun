@@ -107,38 +107,40 @@ final class ReviewRequestsFilterTests: XCTestCase {
         )
     }
 
-    func testExcludeWIPTrueFiltersOutDraftTitleAndLabel() {
-        let fetched = [
-            makePR(id: 1),
-            makePR(id: 2, draft: true),
-            makePR(id: 3, title: "[WIP] something"),
-            makePR(id: 4, labelNames: ["wip"]),
-        ]
-        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: true, limit: 50)
-        XCTAssertEqual(result.map(\.id), [1])
+    func testMergeReviewRequestsPreservesBothCategoriesAndDeduplicates() {
+        let personal = [makePR(id: 1), makePR(id: 2)]
+        let team = [makePR(id: 2), makePR(id: 3)]
+        let result = FetchDiff.mergeReviewRequests(personal: personal, team: team)
+        XCTAssertEqual(Set(result.map(\.id)), [1, 2, 3])
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(Set(result.filter(\.isPersonalRequest).map(\.id)), [1, 2])
+        XCTAssertEqual(Set(result.filter(\.isTeamRequest).map(\.id)), [2, 3])
+        XCTAssertEqual(FetchDiff.newItems(fetched: result, known: []).newOnes.count, 3)
     }
 
-    func testExcludeWIPFalseKeepsAll() {
-        let fetched = [
-            makePR(id: 1),
-            makePR(id: 2, draft: true),
-            makePR(id: 3, title: "[WIP] something"),
-            makePR(id: 4, labelNames: ["wip"]),
-        ]
-        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: false, limit: 50)
-        XCTAssertEqual(result.map(\.id), [1, 2, 3, 4])
+    func testEachReviewRequestCategoryHasItsOwnLimit() {
+        var shared = makePR(id: 1)
+        shared.isPersonalRequest = true
+        shared.isTeamRequest = true
+        var personal = (2...25).map { makePR(id: $0) }
+        var team = (26...49).map { makePR(id: $0) }
+        for index in personal.indices { personal[index].isPersonalRequest = true }
+        for index in team.indices { team[index].isTeamRequest = true }
+        let result = FetchDiff.reviewRequests(fetched: [shared] + personal + team, limit: 20)
+        XCTAssertEqual(result.personal.count, 20)
+        XCTAssertEqual(result.team.count, 20)
+        XCTAssertTrue(result.personal.allSatisfy(\.isPersonalRequest))
+        XCTAssertTrue(result.team.allSatisfy(\.isTeamRequest))
+        XCTAssertEqual(result.personal.first?.id, 1)
+        XCTAssertEqual(result.team.first?.id, 1)
     }
 
-    func testLimitExactBoundaryKeepsAll() {
-        let fetched = (1...3).map { makePR(id: $0) }
-        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: true, limit: 3)
-        XCTAssertEqual(result.map(\.id), [1, 2, 3])
-    }
-
-    func testLimitExceededTruncates() {
-        let fetched = (1...5).map { makePR(id: $0) }
-        let result = FetchDiff.reviewRequests(fetched: fetched, excludeWIP: true, limit: 3)
-        XCTAssertEqual(result.map(\.id), [1, 2, 3])
+    func testReviewRequestCategoriesKeepFetchedOrderAndHandleEmptyCategory() {
+        var personal = (1...3).map { makePR(id: $0) }
+        for index in personal.indices { personal[index].isPersonalRequest = true }
+        let result = FetchDiff.reviewRequests(fetched: personal, limit: 2)
+        XCTAssertEqual(result.personal.map(\.id), [1, 2])
+        XCTAssertTrue(result.team.isEmpty)
     }
 }
 

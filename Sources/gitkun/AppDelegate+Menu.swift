@@ -22,11 +22,11 @@ extension AppDelegate {
         menu.addItem(.separator())
 
         // レビュー依頼。クリックしても一覧から削除しない（次ポーリングで再取得）。
-        addSubmenu(into: menu,
-                   title: "Review Requests",
-                   items: appState.unreviewedPRs,
-                   emptyTitle: "No review requests",
-                   dotColor: .systemOrange)
+        let reviews = FetchDiff.reviewRequests(fetched: appState.unreviewedPRs, limit: AppState.displayLimit)
+        addSubmenu(into: menu, title: "Review Requests: Personal", items: reviews.personal,
+                   emptyTitle: "No personal review requests", dotColor: .systemOrange)
+        addSubmenu(into: menu, title: "Review Requests: Team", items: reviews.team,
+                   emptyTitle: "No team review requests", dotColor: .systemOrange)
 
         // My PRs（assignee:@me と author:@me のマージ）。クリックしても削除しない。
         addSubmenu(into: menu,
